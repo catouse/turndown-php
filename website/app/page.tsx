@@ -180,6 +180,19 @@ export default function Home() {
       : t.runtime[engineStatus];
 
   useEffect(() => {
+    if (!('highlights' in CSS)) return;
+
+    const highlighterUrl = new URL(
+      'vendor/microlighter/microlighter.min.js',
+      document.baseURI,
+    );
+
+    void import(/* @vite-ignore */ highlighterUrl.href).catch(() => {
+      // Plain code remains readable when syntax highlighting is unavailable.
+    });
+  }, []);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.lang = language === 'zh' ? 'zh-CN' : 'en';
     root.dataset.theme = theme;
@@ -315,7 +328,7 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <main data-syntax-theme="tokyo-night">
       <header className="site-header">
         <a className="brand" href="#top" aria-label={t.navigation.home}>
           <TurndownLogo className="brand-logo" />
@@ -391,7 +404,7 @@ export default function Home() {
           </div>
           <div className="install-command" aria-label={t.hero.installAria}>
             <span className="prompt" aria-hidden="true">$</span>
-            <code>composer require catouse/turndown-php</code>
+            <pre><code className="language-bash">composer require catouse/turndown-php</code></pre>
             <button
               type="button"
               onClick={() => copyText('composer require catouse/turndown-php', 'install')}
@@ -648,7 +661,7 @@ export default function Home() {
               {copied === 'php' ? t.api.copiedCode : t.api.copyCode}
             </button>
           </div>
-          <pre><code>{phpExample}</code></pre>
+          <pre><code className="language-php">{phpExample}</code></pre>
         </div>
       </section>
 

@@ -55,6 +55,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
+        {/* The generated vendor theme must stay external so ::highlight rules reach the browser intact. */}
+        {/* eslint-disable-next-line @next/next/no-css-tags */}
+        <link rel="stylesheet" href="/vendor/microlighter/themes/tokyo-night.css" />
         <script dangerouslySetInnerHTML={{ __html: preferenceScript }} />
       </head>
       <body>{children}</body>

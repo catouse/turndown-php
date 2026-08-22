@@ -7,18 +7,20 @@
   },
   "scripts": {
     "generate:php-runtime": "node scripts/generate-php-runtime.mjs",
-    "predev": "npm run generate:php-runtime",
+    "generate:syntax-assets": "node scripts/generate-syntax-assets.mjs",
+    "predev": "npm run generate:php-runtime && npm run generate:syntax-assets",
     "dev": "vinext dev",
-    "prebuild": "npm run generate:php-runtime",
+    "prebuild": "npm run generate:php-runtime && npm run generate:syntax-assets",
     "build": "vinext build",
-    "prebuild:pages": "npm run generate:php-runtime",
+    "prebuild:pages": "npm run generate:php-runtime && npm run generate:syntax-assets",
     "build:pages": "vite build --config vite.pages.config.ts",
     "preview:pages": "vite preview --config vite.pages.config.ts",
     "start": "vinext start",
     "test:php-wasm": "node scripts/smoke-php-wasm.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern pages-dist --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern pages-dist --ignore-pattern .next --ignore-pattern public/vendor"
   },
   "dependencies": {
+    "microlighter": "2.1.0",
     "next": "16.3.2",
     "php-wasm": "0.1.0",
     "php-wasm-dom": "0.1.0",
