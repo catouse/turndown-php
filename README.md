@@ -1,5 +1,7 @@
 # Turndown PHP
 
+**English** | [简体中文](README.zh-CN.md)
+
 Turndown PHP is a configurable HTML-to-Markdown converter for PHP 8.1+. It is an independent PHP port compatible with [Turndown 7.2.4](https://github.com/mixmark-io/turndown/tree/fb7a865ef5eba4081dfd4e20a894a61ef7a2edca) and includes PHP ports of the [official GFM plugins](https://github.com/mixmark-io/turndown-plugin-gfm/tree/61a981b8c6aaec73bbb8a844d9f8686d0d5f066e).
 
 ## Installation
