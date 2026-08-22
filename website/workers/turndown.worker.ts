@@ -12,11 +12,13 @@ import * as xml84 from 'php-wasm-xml/8.4.mjs';
 import { phpRuntimeBuild, phpRuntimeFiles } from '../app/php-files.generated';
 
 type ConversionOptionValue = string | boolean;
+type RuntimeTarget = 'playground' | 'hero';
 
 type WorkerRequest =
   | { type: 'initialize' }
   | {
       type: 'convert';
+      target: RuntimeTarget;
       requestId: number;
       html: string;
       options: Record<string, ConversionOptionValue>;
@@ -32,11 +34,13 @@ type WorkerResponse =
     }
   | {
       type: 'result';
+      target: RuntimeTarget;
       requestId: number;
       markdown: string;
     }
   | {
       type: 'conversion-error';
+      target: RuntimeTarget;
       requestId: number;
       error: string;
     }
@@ -80,6 +84,7 @@ function installPhpWasmWorkerGlobals() {
     documentElement: { style: {} },
     getElementById: () => null,
     querySelector: () => null,
+    querySelectorAll: () => [],
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
   };
@@ -252,6 +257,7 @@ return json_encode(
     if (!result.ok) {
       post({
         type: 'conversion-error',
+        target: request.target,
         requestId: request.requestId,
         error: decodeBase64Text(result.error),
       });
@@ -260,6 +266,7 @@ return json_encode(
 
     post({
       type: 'result',
+      target: request.target,
       requestId: request.requestId,
       markdown: decodeBase64Text(result.markdown),
     });
@@ -268,6 +275,7 @@ return json_encode(
 
     post({
       type: 'conversion-error',
+      target: request.target,
       requestId: request.requestId,
       error: describeError(error),
     });
