@@ -1,0 +1,57 @@
+{
+    "name": "catouse/turndown-php",
+    "description": "A configurable HTML-to-Markdown converter for PHP inspired by Turndown",
+    "keywords": [
+        "commonmark",
+        "converter",
+        "gfm",
+        "html",
+        "markdown",
+        "turndown"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/catouse/turndown-php",
+    "support": {
+        "issues": "https://github.com/catouse/turndown-php/issues",
+        "source": "https://github.com/catouse/turndown-php"
+    },
+    "require": {
+        "php": "^8.1",
+        "ext-dom": "*",
+        "ext-mbstring": "*",
+        "masterminds/html5": "^2.10.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Catouse\\Turndown\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Catouse\\Turndown\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse --no-progress --memory-limit=1G",
+        "cs:check": "php-cs-fixer fix --dry-run --diff --verbose",
+        "check": [
+            "@composer validate --strict --no-check-publish",
+            "@cs:check",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "config": {
+        "allow-plugins": false,
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}
