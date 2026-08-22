@@ -1,0 +1,51 @@
+{
+  "name": "turndown-php-website",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "generate:php-runtime": "node scripts/generate-php-runtime.mjs",
+    "predev": "npm run generate:php-runtime",
+    "dev": "vinext dev",
+    "prebuild": "npm run generate:php-runtime",
+    "build": "vinext build",
+    "prebuild:pages": "npm run generate:php-runtime",
+    "build:pages": "vite build --config vite.pages.config.ts",
+    "preview:pages": "vite preview --config vite.pages.config.ts",
+    "start": "vinext start",
+    "test:php-wasm": "node scripts/smoke-php-wasm.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern pages-dist --ignore-pattern .next"
+  },
+  "dependencies": {
+    "next": "16.3.2",
+    "php-wasm": "0.1.0",
+    "php-wasm-dom": "0.1.0",
+    "php-wasm-libxml": "0.1.0",
+    "php-wasm-mbstring": "0.1.0",
+    "php-wasm-xml": "0.1.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.53.1",
+    "@cloudflare/workers-types": "5.20260820.1",
+    "@openai/sites-vite-plugin": "^0.1.0 || ^0.2.0",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.34",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "react-server-dom-webpack": "19.2.8",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "vinext": "1.0.0-beta.8",
+    "vite": "8.2.2",
+    "wrangler": "4.125.0"
+  },
+  "type": "module"
+}

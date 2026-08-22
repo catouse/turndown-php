@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" role="img" aria-labelledby="favicon-title">
+  <title id="favicon-title">Turndown PHP</title>
+  <rect x="2" y="2" width="5" height="5" rx="1.5" fill="#9A88FF"/>
+  <rect x="10" y="2" width="3" height="3" rx="1" fill="#554B82"/>
+  <rect x="2" y="10" width="3" height="3" rx="1" fill="#554B82"/>
+  <rect x="8" y="8" width="6" height="6" rx="1.8" fill="#9A88FF"/>
+</svg>
