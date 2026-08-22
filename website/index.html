@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Turndown PHP" />
-    <meta property="og:title" content="Turndown PHP — HTML to Markdown for PHP" />
+    <meta property="og:title" content="Turndown PHP | HTML to Markdown for PHP" />
     <meta
       property="og:description"
       content="A precise Turndown port for modern PHP, with configurable rules and official GFM plugins."
@@ -21,7 +21,7 @@
     <meta property="og:image:height" content="1024" />
     <meta property="og:image:alt" content="Turndown PHP brand mark" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Turndown PHP — HTML to Markdown for PHP" />
+    <meta name="twitter:title" content="Turndown PHP | HTML to Markdown for PHP" />
     <meta
       name="twitter:description"
       content="A precise Turndown port for modern PHP, with configurable rules and official GFM plugins."
@@ -32,7 +32,31 @@
     <link rel="icon" type="image/png" sizes="16x16" href="%BASE_URL%favicon/favicon-16.png" />
     <link rel="shortcut icon" href="%BASE_URL%favicon/favicon.ico" />
     <link rel="apple-touch-icon" href="%BASE_URL%favicon/apple-touch-icon.png" />
-    <title>Turndown PHP — HTML to Markdown for PHP</title>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var language = navigator.language && navigator.language.toLowerCase().startsWith('zh')
+          ? 'zh'
+          : 'en';
+        var theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+          ? 'light'
+          : 'dark';
+        try {
+          var savedLanguage = window.localStorage.getItem('turndown-language');
+          var savedTheme = window.localStorage.getItem('turndown-theme');
+          if (savedLanguage === 'en' || savedLanguage === 'zh') language = savedLanguage;
+          if (savedTheme === 'dark' || savedTheme === 'light') theme = savedTheme;
+        } catch (error) {
+          // Local preferences remain session-only when storage is unavailable.
+        }
+        root.lang = language === 'zh' ? 'zh-CN' : 'en';
+        root.dataset.theme = theme;
+        root.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').content =
+          theme === 'light' ? '#f5f6fb' : '#080b18';
+      })();
+    </script>
+    <title>Turndown PHP | HTML to Markdown for PHP</title>
   </head>
   <body>
     <div id="root"></div>

@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 :root {
+  color-scheme: dark;
   --page: #080b18;
   --page-soft: #0c0f20;
   --ink: #f8f6f1;
@@ -14,7 +15,29 @@
   --violet: #9a88ff;
   --blue: #4ca6ff;
   --lime: #b7f36b;
+  --lime-fill: #b7f36b;
+  --on-lime: #11160e;
   --cream: #f3eadc;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --page: #f5f6fb;
+  --page-soft: #eef0f7;
+  --ink: #17182a;
+  --muted: #555c72;
+  --muted-2: #666e84;
+  --surface: #ffffff;
+  --surface-2: #f2f3f8;
+  --surface-3: #e5e7f1;
+  --line: rgba(50, 47, 95, 0.16);
+  --line-strong: rgba(50, 47, 95, 0.3);
+  --violet: #6047c1;
+  --blue: #216fb5;
+  --lime: #356d28;
+  --lime-fill: #a9e95f;
+  --on-lime: #17210e;
+  --cream: #514767;
 }
 
 * {
@@ -121,6 +144,79 @@ textarea:focus-visible {
   background: rgba(255, 255, 255, 0.025);
 }
 
+.site-header-actions,
+.preference-controls {
+  display: flex;
+  align-items: center;
+}
+
+.site-header-actions {
+  gap: 24px;
+}
+
+.preference-controls {
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.language-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.language-switch button,
+.theme-switch {
+  min-height: 32px;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 680;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.language-switch button {
+  padding: 0 9px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.language-switch button:hover,
+.theme-switch:hover {
+  color: var(--ink);
+}
+
+.language-switch button.active {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.theme-switch:hover {
+  border-color: var(--line-strong);
+}
+
+.theme-swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: inset -3px 0 0 var(--surface);
+}
+
 .site-header nav a span,
 .secondary-action span,
 .api-copy > a span,
@@ -225,8 +321,8 @@ h1 em {
 }
 
 .primary-action {
-  background: var(--lime);
-  color: #11160e;
+  background: var(--lime-fill);
+  color: var(--on-lime);
   box-shadow: 0 10px 36px rgba(183, 243, 107, 0.11);
 }
 
@@ -1105,6 +1201,236 @@ footer {
   border: 0;
 }
 
+html[data-theme='light'] body {
+  background:
+    radial-gradient(circle at 78% -8%, rgba(96, 71, 193, 0.12), transparent 34rem),
+    radial-gradient(circle at 8% 31%, rgba(33, 111, 181, 0.07), transparent 28rem),
+    var(--page);
+}
+
+html[data-theme='light'] ::selection {
+  background: rgba(53, 109, 40, 0.2);
+  color: var(--ink);
+}
+
+html[data-theme='light'] .site-header nav,
+html[data-theme='light'] .hero-intro {
+  color: #51576c;
+}
+
+html[data-theme='light'] .site-header nav a:hover,
+html[data-theme='light'] .hero-aside-link:hover,
+html[data-theme='light'] .example-bar button:hover,
+html[data-theme='light'] .code-toolbar button:hover,
+html[data-theme='light'] .footer-links a:hover {
+  color: var(--ink);
+}
+
+html[data-theme='light'] .site-header nav a:last-child,
+html[data-theme='light'] .language-switch,
+html[data-theme='light'] .theme-switch {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+html[data-theme='light'] h1 em {
+  color: #6a50c9;
+}
+
+html[data-theme='light'] .secondary-action {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+}
+
+html[data-theme='light'] .secondary-action:hover {
+  background: var(--surface-2);
+}
+
+html[data-theme='light'] .install-command {
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 1px white;
+  color: #443f70;
+}
+
+html[data-theme='light'] .install-command button {
+  color: #443f70;
+}
+
+html[data-theme='light'] .install-command button:hover {
+  background: #dde0eb;
+}
+
+html[data-theme='light'] .hero-aside strong {
+  color: var(--ink);
+}
+
+html[data-theme='light'] .hero-aside-link {
+  text-decoration-color: rgba(85, 92, 114, 0.42);
+}
+
+html[data-theme='light'] .playground {
+  background:
+    linear-gradient(rgba(242, 243, 249, 0.94), rgba(242, 243, 249, 0.94)),
+    repeating-linear-gradient(90deg, transparent 0, transparent 59px, rgba(96, 71, 193, 0.08) 60px);
+}
+
+html[data-theme='light'] .example-bar,
+html[data-theme='light'] .settings-card,
+html[data-theme='light'] .pipeline {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+html[data-theme='light'] .example-tabs button.active {
+  border-color: rgba(96, 71, 193, 0.28);
+  background: rgba(96, 71, 193, 0.1);
+  color: #4430a0;
+}
+
+html[data-theme='light'] .example-actions button:last-child {
+  color: #40455a;
+}
+
+html[data-theme='light'] .converter-shell {
+  box-shadow: 0 28px 70px rgba(54, 51, 93, 0.13);
+}
+
+html[data-theme='light'] .editor-input {
+  background: #fbfcff;
+}
+
+html[data-theme='light'] .editor-output {
+  background: #f1f2f8;
+}
+
+html[data-theme='light'] .panel-toolbar label,
+html[data-theme='light'] .setting > span {
+  color: #303349;
+}
+
+html[data-theme='light'] .panel-toolbar > span,
+html[data-theme='light'] .engine-badge,
+html[data-theme='light'] .engine-note {
+  color: #697087;
+}
+
+html[data-theme='light'] .engine-badge.ready {
+  color: #3f6f31;
+}
+
+html[data-theme='light'] .engine-badge.converting,
+html[data-theme='light'] .engine-note > span:first-child,
+html[data-theme='light'] .engine-note-copy a {
+  color: #5d49b4;
+}
+
+html[data-theme='light'] .engine-badge.error {
+  color: #a92e47;
+}
+
+html[data-theme='light'] .panel-toolbar button {
+  border-color: rgba(53, 109, 40, 0.28);
+  background: rgba(53, 109, 40, 0.07);
+}
+
+html[data-theme='light'] .panel-toolbar button:hover {
+  background: rgba(53, 109, 40, 0.12);
+}
+
+html[data-theme='light'] textarea {
+  color: #30364f;
+}
+
+html[data-theme='light'] textarea::placeholder {
+  color: #777e94;
+}
+
+html[data-theme='light'] .editor-output textarea {
+  color: #25283d;
+}
+
+html[data-theme='light'] .conversion-arrow {
+  border-color: rgba(96, 71, 193, 0.38);
+  background: white;
+  color: #5d49b4;
+  box-shadow: 0 8px 24px rgba(54, 51, 93, 0.16);
+}
+
+html[data-theme='light'] .setting {
+  border-color: var(--line);
+  background: rgba(245, 246, 251, 0.8);
+}
+
+html[data-theme='light'] .setting select {
+  color: #373450;
+}
+
+html[data-theme='light'] .switch-setting i {
+  background: #d8dbe6;
+}
+
+html[data-theme='light'] .switch-setting i::after {
+  background: #777e94;
+}
+
+html[data-theme='light'] .switch-setting input:checked + i {
+  border-color: rgba(53, 109, 40, 0.46);
+  background: rgba(53, 109, 40, 0.16);
+}
+
+html[data-theme='light'] .feature-grid article {
+  background: linear-gradient(180deg, rgba(96, 71, 193, 0.025), transparent);
+}
+
+html[data-theme='light'] .pipeline b {
+  color: #858ba0;
+}
+
+html[data-theme='light'] .api-section {
+  background:
+    radial-gradient(circle at 76% 50%, rgba(96, 71, 193, 0.09), transparent 32rem),
+    #eef0f7;
+}
+
+html[data-theme='light'] .api-copy li,
+html[data-theme='light'] .api-copy > a,
+html[data-theme='light'] .security-note > a {
+  color: #34374b;
+}
+
+html[data-theme='light'] .code-card {
+  background: #fafaff;
+  box-shadow: 0 35px 80px rgba(54, 51, 93, 0.14), 0 0 70px rgba(96, 71, 193, 0.05);
+}
+
+html[data-theme='light'] .code-toolbar {
+  background: rgba(96, 71, 193, 0.025);
+}
+
+html[data-theme='light'] .code-toolbar > div span {
+  background: #a5a9b9;
+}
+
+html[data-theme='light'] .code-toolbar p,
+html[data-theme='light'] .code-toolbar button {
+  color: #656b81;
+}
+
+html[data-theme='light'] .code-card code {
+  color: #373450;
+}
+
+html[data-theme='light'] .security-note {
+  border-color: rgba(81, 71, 103, 0.2);
+  background: linear-gradient(90deg, rgba(81, 71, 103, 0.06), rgba(96, 71, 193, 0.04));
+}
+
+html[data-theme='light'] .security-mark {
+  border-color: rgba(81, 71, 103, 0.32);
+}
+
+html[data-theme='light'] .footer-links {
+  color: #5c6278;
+}
+
 @media (max-width: 1120px) {
   .hero {
     grid-template-columns: minmax(0, 1fr) 300px;
@@ -1252,11 +1578,11 @@ footer {
   }
 
   .site-header nav {
-    gap: 0;
+    display: none;
   }
 
-  .site-header nav a:not(:last-child) {
-    display: none;
+  .site-header-actions {
+    gap: 0;
   }
 
   .brand-logo {
@@ -1414,6 +1740,12 @@ footer {
   .footer-links {
     flex-wrap: wrap;
     gap: 15px 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand > span {
+    display: none;
   }
 }
 

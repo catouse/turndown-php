@@ -1,7 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { TurndownLogo } from './TurndownLogo';
+import {
+  playgroundExamples,
+  siteContent,
+  type Language,
+  type Theme,
+} from './site-content';
 
 type ConversionOptions = {
   headingStyle: 'setext' | 'atx';
@@ -44,135 +50,79 @@ const defaultOptions: ConversionOptions = {
   preformattedCode: false,
 };
 
-const examples = [
-  {
-    id: 'product',
-    label: 'Product brief',
-    html: `<article>
-  <h1>Ship cleaner content</h1>
-  <p>Turn <strong>HTML</strong> into portable, readable Markdown.</p>
-  <h2>Release checklist</h2>
-  <ul>
-    <li><input type="checkbox" checked> Confirm the content model</li>
-    <li><input type="checkbox"> Publish the migration guide</li>
-  </ul>
-  <blockquote>Good tools make the simple path obvious.</blockquote>
-  <p>Read the <a href="https://github.com/catouse/turndown-php">source on GitHub</a>.</p>
-</article>`,
-  },
-  {
-    id: 'docs',
-    label: 'PHP docs',
-    html: `<section>
-  <h1>Quick start</h1>
-  <p>Install the package with Composer, then create a service.</p>
-  <pre><code class="language-php">use Catouse\\Turndown\\TurndownService;
-
-$service = new TurndownService([
-    'headingStyle' => 'atx',
-]);
-
-echo $service->turndown($html);</code></pre>
-  <p><em>Tip:</em> enable the GFM plugin when your content contains tables.</p>
-</section>`,
-  },
-  {
-    id: 'gfm',
-    label: 'GFM table',
-    html: `<article>
-  <h1>Compatibility snapshot</h1>
-  <table>
-    <thead><tr><th>Feature</th><th>Status</th></tr></thead>
-    <tbody>
-      <tr><td>Tables</td><td><strong>Ready</strong></td></tr>
-      <tr><td>Task lists</td><td><strong>Ready</strong></td></tr>
-      <tr><td>Strikethrough</td><td><del>Planned</del> Ready</td></tr>
-    </tbody>
-  </table>
-</article>`,
-  },
-];
-
 const selectSettings: Array<{
   key: SelectOptionKey;
-  label: string;
-  values: Array<{ label: string; value: string }>;
+  values: Array<{
+    labelKey?: keyof (typeof siteContent)['en']['playground']['settings']['options'];
+    value: string;
+  }>;
   disabledWhen?: (options: ConversionOptions) => boolean;
 }> = [
   {
     key: 'headingStyle',
-    label: 'Heading style',
     values: [
-      { label: 'Setext', value: 'setext' },
-      { label: 'ATX', value: 'atx' },
+      { labelKey: 'setext', value: 'setext' },
+      { labelKey: 'atx', value: 'atx' },
     ],
   },
   {
     key: 'hr',
-    label: 'Horizontal rule',
     values: [
-      { label: '* * *', value: '* * *' },
-      { label: '- - -', value: '- - -' },
-      { label: '_ _ _', value: '_ _ _' },
+      { value: '* * *' },
+      { value: '- - -' },
+      { value: '_ _ _' },
     ],
   },
   {
     key: 'bulletListMarker',
-    label: 'Bullet marker',
     values: [
-      { label: '*', value: '*' },
-      { label: '-', value: '-' },
-      { label: '+', value: '+' },
+      { value: '*' },
+      { value: '-' },
+      { value: '+' },
     ],
   },
   {
     key: 'codeBlockStyle',
-    label: 'Code blocks',
     values: [
-      { label: 'Indented', value: 'indented' },
-      { label: 'Fenced', value: 'fenced' },
+      { labelKey: 'indented', value: 'indented' },
+      { labelKey: 'fenced', value: 'fenced' },
     ],
   },
   {
     key: 'fence',
-    label: 'Fence marker',
     values: [
-      { label: '```', value: '```' },
-      { label: '~~~', value: '~~~' },
+      { value: '```' },
+      { value: '~~~' },
     ],
     disabledWhen: (options) => options.codeBlockStyle !== 'fenced',
   },
   {
     key: 'emDelimiter',
-    label: 'Emphasis',
     values: [
-      { label: '_', value: '_' },
-      { label: '*', value: '*' },
+      { value: '_' },
+      { value: '*' },
     ],
   },
   {
     key: 'strongDelimiter',
-    label: 'Strong',
     values: [
-      { label: '**', value: '**' },
-      { label: '__', value: '__' },
+      { value: '**' },
+      { value: '__' },
     ],
   },
   {
     key: 'linkStyle',
-    label: 'Links',
     values: [
-      { label: 'Inline', value: 'inlined' },
-      { label: 'Referenced', value: 'referenced' },
+      { labelKey: 'inlined', value: 'inlined' },
+      { labelKey: 'referenced', value: 'referenced' },
     ],
   },
   {
     key: 'linkReferenceStyle',
-    label: 'Link references',
     values: [
-      { label: 'Full', value: 'full' },
-      { label: 'Collapsed', value: 'collapsed' },
-      { label: 'Shortcut', value: 'shortcut' },
+      { labelKey: 'full', value: 'full' },
+      { labelKey: 'collapsed', value: 'collapsed' },
+      { labelKey: 'shortcut', value: 'shortcut' },
     ],
     disabledWhen: (options) => options.linkStyle !== 'referenced',
   },
@@ -192,9 +142,23 @@ $service->use(new Gfm());
 
 $markdown = $service->turndown($html);`;
 
+function getInitialLanguage(): Language {
+  if (typeof document === 'undefined') return 'en';
+  return document.documentElement.lang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+function getInitialTheme(): Theme {
+  if (typeof document === 'undefined') return 'dark';
+  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+}
+
 export default function Home() {
-  const [html, setHtml] = useState(examples[0].html);
-  const [activeExample, setActiveExample] = useState(examples[0].id);
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [html, setHtml] = useState<string>(
+    () => playgroundExamples[0].html[getInitialLanguage()],
+  );
+  const [activeExample, setActiveExample] = useState<string>(playgroundExamples[0].id);
   const [options, setOptions] = useState<ConversionOptions>(defaultOptions);
   const [gfmEnabled, setGfmEnabled] = useState(true);
   const [copied, setCopied] = useState<CopyTarget>(null);
@@ -203,12 +167,38 @@ export default function Home() {
     error: '',
     pending: true,
   });
-  const [engine, setEngine] = useState<{ status: EngineStatus; message: string }>({
-    status: 'loading',
-    message: 'Starting PHP 8.4 in your browser…',
-  });
+  const [engineStatus, setEngineStatus] = useState<EngineStatus>('loading');
+  const [runtimeUnavailable, setRuntimeUnavailable] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const latestRequestRef = useRef(0);
+  const t = siteContent[language];
+  const engineMessage =
+    engineStatus === 'error'
+      ? runtimeUnavailable
+        ? t.runtime.stopped
+        : t.runtime.fatal
+      : t.runtime[engineStatus];
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.lang = language === 'zh' ? 'zh-CN' : 'en';
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    document.title = t.meta.title;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute('content', t.meta.description);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#080b18' : '#f5f6fb');
+
+    try {
+      window.localStorage.setItem('turndown-language', language);
+      window.localStorage.setItem('turndown-theme', theme);
+    } catch {
+      // The controls still work when browser storage is unavailable.
+    }
+  }, [language, t.meta.description, t.meta.title, theme]);
 
   useEffect(() => {
     const worker = new Worker(new URL('../workers/turndown.worker.ts', import.meta.url), {
@@ -220,12 +210,13 @@ export default function Home() {
       const message = event.data;
 
       if (message.type === 'status') {
-        setEngine({ status: message.status, message: message.message });
+        setEngineStatus(message.status);
         return;
       }
 
       if (message.type === 'fatal-error') {
-        setEngine({ status: 'error', message: 'PHP/WASM could not start.' });
+        setEngineStatus('error');
+        setRuntimeUnavailable(false);
         setConversion({ markdown: '', error: message.error, pending: false });
         return;
       }
@@ -238,14 +229,16 @@ export default function Home() {
         setConversion({ markdown: message.markdown, error: '', pending: false });
       }
 
-      setEngine({ status: 'ready', message: 'PHP 8.4 WASM · turndown-php' });
+      setRuntimeUnavailable(false);
+      setEngineStatus('ready');
     };
 
     worker.onerror = () => {
-      setEngine({ status: 'error', message: 'PHP/WASM worker stopped.' });
+      setEngineStatus('error');
+      setRuntimeUnavailable(true);
       setConversion({
         markdown: '',
-        error: 'The browser could not run the PHP conversion worker.',
+        error: '',
         pending: false,
       });
     };
@@ -267,11 +260,8 @@ export default function Home() {
         error: '',
         pending: true,
       }));
-      setEngine((current) =>
-        current.status === 'loading'
-          ? current
-          : { status: 'converting', message: 'Converting with turndown-php…' },
-      );
+      setRuntimeUnavailable(false);
+      setEngineStatus((current) => (current === 'loading' ? current : 'converting'));
       workerRef.current?.postMessage({
         type: 'convert',
         requestId,
@@ -292,10 +282,20 @@ export default function Home() {
   }
 
   function loadExample(id: string) {
-    const example = examples.find((item) => item.id === id);
+    const example = playgroundExamples.find((item) => item.id === id);
     if (!example) return;
-    setHtml(example.html);
+    setHtml(example.html[language]);
     setActiveExample(id);
+  }
+
+  function changeLanguage(nextLanguage: Language) {
+    if (nextLanguage === language) return;
+
+    const example = playgroundExamples.find((item) => item.id === activeExample);
+    if (example) {
+      setHtml(example.html[nextLanguage]);
+    }
+    setLanguage(nextLanguage);
   }
 
   async function copyText(text: string, target: Exclude<CopyTarget, null>) {
@@ -311,64 +311,99 @@ export default function Home() {
   function resetPlayground() {
     setOptions(defaultOptions);
     setGfmEnabled(true);
-    loadExample(examples[0].id);
+    loadExample(playgroundExamples[0].id);
   }
 
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Turndown PHP home">
+        <a className="brand" href="#top" aria-label={t.navigation.home}>
           <TurndownLogo className="brand-logo" />
           <span>Turndown PHP</span>
         </a>
-        <nav aria-label="Primary navigation">
-          <a href="#playground">Playground</a>
-          <a href="#api">API</a>
-          <a
-            href="https://github.com/catouse/turndown-php"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub <span aria-hidden="true">↗</span>
-          </a>
-        </nav>
+        <div className="site-header-actions">
+          <nav aria-label={t.navigation.aria}>
+            <a href="#playground">{t.navigation.playground}</a>
+            <a href="#api">{t.navigation.api}</a>
+            <a
+              href="https://github.com/catouse/turndown-php"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </nav>
+          <div className="preference-controls">
+            <div
+              className="language-switch"
+              role="group"
+              aria-label={t.controls.language}
+            >
+              <button
+                className={language === 'en' ? 'active' : ''}
+                type="button"
+                aria-pressed={language === 'en'}
+                onClick={() => changeLanguage('en')}
+              >
+                EN
+              </button>
+              <button
+                className={language === 'zh' ? 'active' : ''}
+                type="button"
+                aria-pressed={language === 'zh'}
+                onClick={() => changeLanguage('zh')}
+              >
+                中文
+              </button>
+            </div>
+            <button
+              className="theme-switch"
+              type="button"
+              aria-label={theme === 'dark' ? t.controls.useLight : t.controls.useDark}
+              title={theme === 'dark' ? t.controls.useLight : t.controls.useDark}
+              onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+            >
+              <span className="theme-swatch" aria-hidden="true" />
+              {theme === 'dark' ? t.controls.light : t.controls.dark}
+            </button>
+          </div>
+        </div>
       </header>
 
       <section className="hero" id="top">
         <div className="hero-grid" aria-hidden="true" />
         <div className="hero-copy">
-          <p className="eyebrow"><span /> HTML in. Markdown out.</p>
-          <h1>A precise Turndown port, built for <em>PHP.</em></h1>
-          <p className="hero-intro">
-            Convert unruly HTML into clean Markdown with a familiar API,
-            configurable rules, and official GFM plugins.
-          </p>
+          <p className="eyebrow"><span /> {t.hero.eyebrow}</p>
+          <h1>{t.hero.title} <em>{t.hero.emphasis}</em></h1>
+          <p className="hero-intro">{t.hero.intro}</p>
           <div className="hero-actions">
-            <a className="primary-action" href="#playground">Try the converter <span>↓</span></a>
+            <a className="primary-action" href="#playground">
+              {t.hero.tryConverter} <span>↓</span>
+            </a>
             <a
               className="secondary-action"
               href="https://github.com/catouse/turndown-php"
               target="_blank"
               rel="noreferrer"
             >
-              Read the docs <span>↗</span>
+              {t.hero.readDocs} <span>↗</span>
             </a>
           </div>
-          <div className="install-command" aria-label="Composer installation command">
+          <div className="install-command" aria-label={t.hero.installAria}>
             <span className="prompt" aria-hidden="true">$</span>
             <code>composer require catouse/turndown-php</code>
             <button
               type="button"
               onClick={() => copyText('composer require catouse/turndown-php', 'install')}
-              aria-label="Copy Composer installation command"
+              aria-label={t.hero.copyInstall}
             >
-              {copied === 'install' ? 'Copied' : 'Copy'}
+              {copied === 'install' ? t.hero.copied : t.hero.copy}
             </button>
           </div>
         </div>
 
-        <div className="hero-aside" aria-label="Project highlights">
-          <p className="hero-aside-label">Project signal</p>
+        <div className="hero-aside" aria-label={t.hero.highlightsAria}>
+          <p className="hero-aside-label">{t.hero.signal}</p>
           <div>
             <strong>7.2.4</strong>
             <span>
@@ -378,32 +413,29 @@ export default function Home() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Turndown compatibility target
+                {t.hero.compatibility}
               </a>
             </span>
           </div>
-          <div><strong>PHP 8.1+</strong><span>Modern PHP, no framework required</span></div>
-          <div><strong>GFM</strong><span>Tables, tasks, strike &amp; fenced code</span></div>
-          <div><strong>MIT</strong><span>Open source and production-friendly</span></div>
+          <div><strong>PHP 8.1+</strong><span>{t.hero.php}</span></div>
+          <div><strong>GFM</strong><span>{t.hero.gfm}</span></div>
+          <div><strong>MIT</strong><span>{t.hero.license}</span></div>
         </div>
       </section>
 
       <section className="playground" id="playground" aria-labelledby="playground-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow"><span /> Live playground</p>
-            <h2 id="playground-title">Make some Markdown</h2>
+            <p className="eyebrow"><span /> {t.playground.eyebrow}</p>
+            <h2 id="playground-title">{t.playground.title}</h2>
           </div>
-          <p>
-            Paste HTML on the left. Once PHP loads, tune the rules below and
-            the Markdown updates on the right.
-          </p>
+          <p>{t.playground.intro}</p>
         </div>
 
-        <div className="example-bar" aria-label="Playground examples">
-          <div className="example-tabs" role="group" aria-label="Load an example">
-            <span>Examples</span>
-            {examples.map((example) => (
+        <div className="example-bar" aria-label={t.playground.examplesAria}>
+          <div className="example-tabs" role="group" aria-label={t.playground.loadExampleAria}>
+            <span>{t.playground.examples}</span>
+            {playgroundExamples.map((example) => (
               <button
                 className={activeExample === example.id ? 'active' : ''}
                 key={example.id}
@@ -411,13 +443,15 @@ export default function Home() {
                 onClick={() => loadExample(example.id)}
                 aria-pressed={activeExample === example.id}
               >
-                {example.label}
+                {example.label[language]}
               </button>
             ))}
           </div>
           <div className="example-actions">
-            <button type="button" onClick={() => { setHtml(''); setActiveExample(''); }}>Clear</button>
-            <button type="button" onClick={resetPlayground}>Reset</button>
+            <button type="button" onClick={() => { setHtml(''); setActiveExample(''); }}>
+              {t.playground.clear}
+            </button>
+            <button type="button" onClick={resetPlayground}>{t.playground.reset}</button>
           </div>
         </div>
 
@@ -426,9 +460,12 @@ export default function Home() {
             <div className="panel-toolbar">
               <div className="panel-title">
                 <span className="status-dot violet" />
-                <label htmlFor="html-input">HTML</label>
+                <label htmlFor="html-input">{t.playground.html}</label>
               </div>
-              <span>{html.length.toLocaleString()} chars</span>
+              <span>
+                {html.length.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}{' '}
+                {t.playground.chars}
+              </span>
             </div>
             <textarea
               id="html-input"
@@ -436,9 +473,9 @@ export default function Home() {
               onChange={(event) => { setHtml(event.target.value); setActiveExample(''); }}
               spellCheck={false}
               aria-describedby="html-hint"
-              placeholder="Paste HTML here…"
+              placeholder={t.playground.placeholder}
             />
-            <p className="sr-only" id="html-hint">Enter HTML to convert it to Markdown.</p>
+            <p className="sr-only" id="html-hint">{t.playground.htmlHint}</p>
           </div>
 
           <div className="conversion-arrow" aria-hidden="true">→</div>
@@ -446,31 +483,33 @@ export default function Home() {
           <div className="editor-panel editor-output">
             <div className="panel-toolbar">
               <div className="panel-title">
-                <span className={`status-dot ${engine.status === 'error' ? 'error' : 'lime'}`} />
-                <label htmlFor="markdown-output">Markdown</label>
+                <span className={`status-dot ${engineStatus === 'error' ? 'error' : 'lime'}`} />
+                <label htmlFor="markdown-output">{t.playground.markdown}</label>
               </div>
               <div className="panel-actions">
-                <span className={`engine-badge ${engine.status}`}>{engine.message}</span>
+                <span className={`engine-badge ${engineStatus}`}>{engineMessage}</span>
                 <button
                   type="button"
                   onClick={() => copyText(conversion.markdown, 'markdown')}
                   disabled={conversion.pending || !conversion.markdown}
                 >
-                  {copied === 'markdown' ? 'Copied!' : 'Copy output'}
+                  {copied === 'markdown'
+                    ? t.playground.copiedOutput
+                    : t.playground.copyOutput}
                 </button>
               </div>
             </div>
             <textarea
               id="markdown-output"
               value={
-                conversion.error ||
+                (runtimeUnavailable ? t.runtime.unavailable : conversion.error) ||
                 conversion.markdown ||
-                (conversion.pending ? 'Starting the PHP 8.4 runtime…' : '')
+                (conversion.pending ? t.playground.runtimePending : '')
               }
               readOnly
               spellCheck={false}
               aria-busy={conversion.pending}
-              aria-invalid={Boolean(conversion.error)}
+              aria-invalid={runtimeUnavailable || Boolean(conversion.error)}
             />
           </div>
         </div>
@@ -478,10 +517,10 @@ export default function Home() {
         <div className="settings-card">
           <div className="settings-intro">
             <div>
-              <p className="settings-kicker">Conversion settings</p>
-              <h3>Shape the output</h3>
+              <p className="settings-kicker">{t.playground.settings.kicker}</p>
+              <h3>{t.playground.settings.title}</h3>
             </div>
-            <p>Defaults mirror Turndown 7.2.4. Disabled controls do not apply to the current mode.</p>
+            <p>{t.playground.settings.intro}</p>
           </div>
 
           <div className="settings-grid">
@@ -489,7 +528,10 @@ export default function Home() {
               const disabled = setting.disabledWhen?.(options) ?? false;
               return (
                 <label className={disabled ? 'setting disabled' : 'setting'} key={setting.key}>
-                  <span>{setting.label}<small>{setting.key}</small></span>
+                  <span>
+                    {t.playground.settings.fields[setting.key]}
+                    <small>{setting.key}</small>
+                  </span>
                   <select
                     value={String(options[setting.key])}
                     disabled={disabled}
@@ -499,9 +541,13 @@ export default function Home() {
                         event.target.value as ConversionOptions[typeof setting.key],
                       )
                     }
-                  >
+                    >
                     {setting.values.map((value) => (
-                      <option key={value.value} value={value.value}>{value.label}</option>
+                      <option key={value.value} value={value.value}>
+                        {value.labelKey
+                          ? t.playground.settings.options[value.labelKey]
+                          : value.value}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -509,7 +555,7 @@ export default function Home() {
             })}
 
             <label className="setting switch-setting">
-              <span>GFM plugins<small>use(new Gfm())</small></span>
+              <span>{t.playground.settings.gfm}<small>use(new Gfm())</small></span>
               <input
                 type="checkbox"
                 checked={gfmEnabled}
@@ -519,7 +565,7 @@ export default function Home() {
             </label>
 
             <label className="setting switch-setting">
-              <span>Preformatted code<small>preformattedCode</small></span>
+              <span>{t.playground.settings.preformattedCode}<small>preformattedCode</small></span>
               <input
                 type="checkbox"
                 checked={options.preformattedCode}
@@ -532,10 +578,10 @@ export default function Home() {
           <p className="engine-note">
             <span aria-hidden="true">i</span>
             <span className="engine-note-copy">
-              This preview runs the actual PHP package inside PHP 8.4, compiled for the browser by{' '}
+              {t.playground.engineNoteBefore}{' '}
               <a href="https://github.com/seanmorris/php-wasm" target="_blank" rel="noreferrer">
                 seanmorris/php-wasm
-              </a>. Your HTML is converted locally and never sent to a server.
+              </a>{language === 'en' ? '.' : ''} {t.playground.engineNoteAfter}
             </span>
           </p>
         </div>
@@ -544,63 +590,53 @@ export default function Home() {
       <section className="proof-section" aria-labelledby="why-title">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow"><span /> Why Turndown PHP</p>
-            <h2 id="why-title">Familiar rules. Native runtime.</h2>
+            <p className="eyebrow"><span /> {t.proof.eyebrow}</p>
+            <h2 id="why-title">{t.proof.title}</h2>
           </div>
-          <p>Designed for migrations, publishing pipelines, imports, and anywhere HTML needs a cleaner exit.</p>
+          <p>{t.proof.intro}</p>
         </div>
 
         <div className="feature-grid">
-          <article>
-            <span className="feature-number">01</span>
-            <h3>Compatibility, pinned</h3>
-            <p>Targets Turndown 7.2.4 behavior and exercises both string and DOM input against pinned upstream fixtures.</p>
-            <strong>Predictable upgrades</strong>
-          </article>
-          <article>
-            <span className="feature-number">02</span>
-            <h3>GFM, included</h3>
-            <p>Bring tables, highlighted fenced code, task-list items, and strikethrough into one fluent plugin call.</p>
-            <strong>Official plugin ports</strong>
-          </article>
-          <article>
-            <span className="feature-number">03</span>
-            <h3>Rules, composable</h3>
-            <p>Add rules, keep selected HTML, remove unwanted nodes, or supply callbacks without leaving PHP.</p>
-            <strong>Built to extend</strong>
-          </article>
+          {t.proof.features.map((feature, index) => (
+            <article key={feature.title}>
+              <span className="feature-number">{String(index + 1).padStart(2, '0')}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.body}</p>
+              <strong>{feature.tag}</strong>
+            </article>
+          ))}
         </div>
 
-        <div className="pipeline" aria-label="Conversion pipeline">
-          <div><span>01</span><strong>HTML</strong><small>String or DOM node</small></div>
-          <b aria-hidden="true">→</b>
-          <div><span>02</span><strong>Parse</strong><small>HTML5 document tree</small></div>
-          <b aria-hidden="true">→</b>
-          <div><span>03</span><strong>Rules</strong><small>CommonMark + plugins</small></div>
-          <b aria-hidden="true">→</b>
-          <div><span>04</span><strong>Markdown</strong><small>Portable plain text</small></div>
+        <div className="pipeline" aria-label={t.proof.pipelineAria}>
+          {t.proof.pipeline.map((step, index) => (
+            <Fragment key={step.title}>
+              {index > 0 && <b aria-hidden="true">→</b>}
+              <div>
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <strong>{step.title}</strong>
+                <small>{step.detail}</small>
+              </div>
+            </Fragment>
+          ))}
         </div>
       </section>
 
       <section className="api-section" id="api" aria-labelledby="api-title">
         <div className="api-copy">
-          <p className="eyebrow"><span /> Three steps</p>
-          <h2 id="api-title">From install to output in under a minute.</h2>
-          <p>
-            No framework and no service dependency. Install with Composer,
-            configure the converter, then pass it HTML.
-          </p>
+          <p className="eyebrow"><span /> {t.api.eyebrow}</p>
+          <h2 id="api-title">{t.api.title}</h2>
+          <p>{t.api.intro}</p>
           <ul>
-            <li><span>1</span> Requires PHP 8.1, DOM, and Mbstring</li>
-            <li><span>2</span> Accepts HTML strings or supported DOM nodes</li>
-            <li><span>3</span> Returns Markdown as a plain string</li>
+            {t.api.steps.map((step, index) => (
+              <li key={step}><span>{index + 1}</span> {step}</li>
+            ))}
           </ul>
           <a
             href="https://github.com/catouse/turndown-php#usage"
             target="_blank"
             rel="noreferrer"
           >
-            Explore the full API <span>↗</span>
+            {t.api.explore} <span>↗</span>
           </a>
         </div>
 
@@ -609,7 +645,7 @@ export default function Home() {
             <div><span /> <span /> <span /></div>
             <p>example.php</p>
             <button type="button" onClick={() => copyText(phpExample, 'php')}>
-              {copied === 'php' ? 'Copied!' : 'Copy code'}
+              {copied === 'php' ? t.api.copiedCode : t.api.copyCode}
             </button>
           </div>
           <pre><code>{phpExample}</code></pre>
@@ -619,38 +655,35 @@ export default function Home() {
       <aside className="security-note">
         <div className="security-mark" aria-hidden="true">!</div>
         <div>
-          <p className="settings-kicker">A clear boundary</p>
-          <h2>Conversion is not sanitization.</h2>
+          <p className="settings-kicker">{t.security.kicker}</p>
+          <h2>{t.security.title}</h2>
         </div>
-        <p>
-          Treat generated Markdown as untrusted when rendering it back to HTML.
-          Sanitize untrusted input according to your application&apos;s threat model.
-        </p>
+        <p>{t.security.body}</p>
         <a
           href="https://github.com/catouse/turndown-php#parsing-and-security"
           target="_blank"
           rel="noreferrer"
         >
-          Security notes <span>↗</span>
+          {t.security.link} <span>↗</span>
         </a>
       </aside>
 
       <footer>
         <div className="footer-brand">
           <TurndownLogo className="brand-logo" />
-          <div><strong>Turndown PHP</strong><p>HTML to Markdown, without leaving PHP.</p></div>
+          <div><strong>Turndown PHP</strong><p>{t.footer.tagline}</p></div>
         </div>
         <div className="footer-links">
           <a href="https://github.com/catouse/turndown-php" target="_blank" rel="noreferrer">GitHub</a>
           <a href="https://packagist.org/packages/catouse/turndown-php" target="_blank" rel="noreferrer">Packagist</a>
-          <a href="https://github.com/catouse/turndown-php/blob/main/README.zh-CN.md" target="_blank" rel="noreferrer">中文文档</a>
-          <a href="https://github.com/catouse/turndown-php/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+          <a href="https://github.com/catouse/turndown-php/blob/main/README.zh-CN.md" target="_blank" rel="noreferrer">{t.footer.chineseDocs}</a>
+          <a href="https://github.com/catouse/turndown-php/blob/main/LICENSE" target="_blank" rel="noreferrer">{t.footer.license}</a>
         </div>
-        <p className="footer-note">Independent PHP port. Turndown is © Dom Christie.</p>
+        <p className="footer-note">{t.footer.note}</p>
       </footer>
 
       <span className="copy-status sr-only" role="status" aria-live="polite">
-        {copied ? 'Copied to clipboard.' : ''}
+        {copied ? t.clipboardStatus : ''}
       </span>
     </main>
   );
