@@ -1,5 +1,7 @@
 # Turndown PHP
 
+![Turndown PHP 封面：将 HTML 转换为 Markdown](assets/turndown-php-cover.png)
+
 [English](README.md) | **简体中文**
 
 Turndown PHP 是一个面向 PHP 8.1+、可配置的 HTML 转 Markdown 转换器。它是一个独立的 PHP 移植版本，兼容 [Turndown 7.2.4](https://github.com/mixmark-io/turndown/tree/fb7a865ef5eba4081dfd4e20a894a61ef7a2edca)，并包含[官方 GFM 插件](https://github.com/mixmark-io/turndown-plugin-gfm/tree/61a981b8c6aaec73bbb8a844d9f8686d0d5f066e)的 PHP 移植实现。
