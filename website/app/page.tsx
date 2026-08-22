@@ -369,7 +369,19 @@ export default function Home() {
 
         <div className="hero-aside" aria-label="Project highlights">
           <p className="hero-aside-label">Project signal</p>
-          <div><strong>7.2.4</strong><span>Turndown compatibility target</span></div>
+          <div>
+            <strong>7.2.4</strong>
+            <span>
+              <a
+                className="hero-aside-link"
+                href="https://github.com/mixmark-io/turndown"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Turndown compatibility target
+              </a>
+            </span>
+          </div>
           <div><strong>PHP 8.1+</strong><span>Modern PHP, no framework required</span></div>
           <div><strong>GFM</strong><span>Tables, tasks, strike &amp; fenced code</span></div>
           <div><strong>MIT</strong><span>Open source and production-friendly</span></div>

@@ -323,6 +323,18 @@ h1 em {
   line-height: 1.45;
 }
 
+.hero-aside-link {
+  text-decoration: underline;
+  text-decoration-color: rgba(165, 170, 192, 0.42);
+  text-underline-offset: 3px;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.hero-aside-link:hover {
+  color: white;
+  text-decoration-color: var(--lime);
+}
+
 .playground {
   padding: 88px max(36px, calc((100vw - 1440px) / 2 + 36px)) 108px;
   border-top: 1px solid var(--line);
