@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type UIEvent } from 'react';
 import { TurndownLogo } from './TurndownLogo';
 import {
   playgroundExamples,
@@ -25,6 +25,8 @@ type ConversionOptions = {
 type SelectOptionKey = Exclude<keyof ConversionOptions, 'preformattedCode'>;
 type CopyTarget = 'install' | 'markdown' | 'php' | null;
 type EngineStatus = 'loading' | 'ready' | 'converting' | 'error';
+type RuntimeTarget = 'playground' | 'hero';
+type InputView = 'html' | 'preview';
 
 type RuntimeMessage =
   | {
@@ -33,8 +35,8 @@ type RuntimeMessage =
       message: string;
       phpVersion?: string;
     }
-  | { type: 'result'; requestId: number; markdown: string }
-  | { type: 'conversion-error'; requestId: number; error: string }
+  | { type: 'result'; target: RuntimeTarget; requestId: number; markdown: string }
+  | { type: 'conversion-error'; target: RuntimeTarget; requestId: number; error: string }
   | { type: 'fatal-error'; error: string };
 
 const defaultOptions: ConversionOptions = {
@@ -142,6 +144,48 @@ $service->use(new Gfm());
 
 $markdown = $service->turndown($html);`;
 
+const heroPreviews: Record<Language, { html: string }> = {
+  en: {
+    html: `<article>
+  <h1>Ship clean content</h1>
+  <p><strong>HTML</strong> becomes portable.</p>
+</article>`,
+  },
+  zh: {
+    html: `<article>
+  <h1>发布干净内容</h1>
+  <p><strong>HTML</strong> 变得易于移植。</p>
+</article>`,
+  },
+};
+
+function createHtmlPreviewDocument(html: string, language: Language): string {
+  const documentLanguage = language === 'zh' ? 'zh-CN' : 'en';
+
+  return `<!doctype html>
+<html lang="${documentLanguage}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; media-src data: blob:; style-src 'unsafe-inline'; font-src data:">
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #f6f7f3; color: #1b201d; font: 16px/1.6 ui-sans-serif, system-ui, sans-serif; overflow-wrap: anywhere; }
+    img, video, svg { max-width: 100%; height: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 10px; border: 1px solid #c9cec8; text-align: left; }
+    pre { overflow: auto; padding: 16px; border-radius: 8px; background: #e9ece6; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    blockquote { margin-inline: 0; padding-inline-start: 16px; border-inline-start: 3px solid #4c852e; color: #555d58; }
+    a { color: #356f1f; pointer-events: none; }
+    input { accent-color: #4c852e; }
+  </style>
+</head>
+<body>${html}</body>
+</html>`;
+}
+
 function getInitialLanguage(): Language {
   if (typeof document === 'undefined') return 'en';
   return document.documentElement.lang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
@@ -158,7 +202,15 @@ export default function Home() {
   const [html, setHtml] = useState<string>(
     () => playgroundExamples[0].html[getInitialLanguage()],
   );
+  const [heroHtml, setHeroHtml] = useState<string>(
+    () => heroPreviews[getInitialLanguage()].html,
+  );
+  // Keep the rendered child stable while typing so React preserves the selection.
+  const [heroEditorSeed, setHeroEditorSeed] = useState<string>(
+    () => heroPreviews[getInitialLanguage()].html,
+  );
   const [activeExample, setActiveExample] = useState<string>(playgroundExamples[0].id);
+  const [inputView, setInputView] = useState<InputView>('html');
   const [options, setOptions] = useState<ConversionOptions>(defaultOptions);
   const [gfmEnabled, setGfmEnabled] = useState(true);
   const [copied, setCopied] = useState<CopyTarget>(null);
@@ -167,10 +219,20 @@ export default function Home() {
     error: '',
     pending: true,
   });
+  const [heroConversion, setHeroConversion] = useState({
+    markdown: '',
+    error: '',
+    pending: true,
+  });
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('loading');
   const [runtimeUnavailable, setRuntimeUnavailable] = useState(false);
   const workerRef = useRef<Worker | null>(null);
-  const latestRequestRef = useRef(0);
+  const latestRequestRef = useRef<Record<RuntimeTarget, number>>({
+    playground: 0,
+    hero: 0,
+  });
+  const syntaxHighlighterReadyRef = useRef(false);
+  const htmlHighlightRef = useRef<HTMLPreElement | null>(null);
   const t = siteContent[language];
   const engineMessage =
     engineStatus === 'error'
@@ -178,6 +240,24 @@ export default function Home() {
         ? t.runtime.stopped
         : t.runtime.fatal
       : t.runtime[engineStatus];
+  const heroMarkdown = runtimeUnavailable
+    ? t.runtime.stopped
+    : heroConversion.error ||
+      (heroConversion.pending && !heroConversion.markdown
+        ? t.playground.runtimePending
+        : heroConversion.markdown);
+  const heroRuntimeLabel =
+    engineStatus === 'error'
+      ? t.hero.previewUnavailable
+      : engineStatus === 'loading'
+        ? t.hero.previewStarting
+        : engineStatus === 'converting'
+          ? t.hero.previewConverting
+          : t.hero.previewLive;
+  const markdownOutput =
+    (runtimeUnavailable ? t.runtime.unavailable : conversion.error) ||
+    conversion.markdown ||
+    (conversion.pending ? t.playground.runtimePending : '');
 
   useEffect(() => {
     if (!('highlights' in CSS)) return;
@@ -187,10 +267,34 @@ export default function Home() {
       document.baseURI,
     );
 
-    void import(/* @vite-ignore */ highlighterUrl.href).catch(() => {
-      // Plain code remains readable when syntax highlighting is unavailable.
-    });
+    let active = true;
+
+    void import(/* @vite-ignore */ highlighterUrl.href)
+      .then(() => {
+        if (active) {
+          syntaxHighlighterReadyRef.current = true;
+          document.dispatchEvent(new Event('syntax-highlight'));
+        }
+      })
+      .catch(() => {
+        // Plain code remains readable when syntax highlighting is unavailable.
+      });
+
+    return () => {
+      active = false;
+      syntaxHighlighterReadyRef.current = false;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!syntaxHighlighterReadyRef.current) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document.dispatchEvent(new Event('syntax-highlight'));
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [heroConversion.markdown, heroHtml, html, inputView, language, markdownOutput]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -231,15 +335,19 @@ export default function Home() {
         setEngineStatus('error');
         setRuntimeUnavailable(false);
         setConversion({ markdown: '', error: message.error, pending: false });
+        setHeroConversion({ markdown: '', error: message.error, pending: false });
         return;
       }
 
-      if (message.requestId !== latestRequestRef.current) return;
+      if (message.requestId !== latestRequestRef.current[message.target]) return;
+
+      const setTargetConversion =
+        message.target === 'hero' ? setHeroConversion : setConversion;
 
       if (message.type === 'conversion-error') {
-        setConversion({ markdown: '', error: message.error, pending: false });
+        setTargetConversion({ markdown: '', error: message.error, pending: false });
       } else {
-        setConversion({ markdown: message.markdown, error: '', pending: false });
+        setTargetConversion({ markdown: message.markdown, error: '', pending: false });
       }
 
       setRuntimeUnavailable(false);
@@ -250,6 +358,11 @@ export default function Home() {
       setEngineStatus('error');
       setRuntimeUnavailable(true);
       setConversion({
+        markdown: '',
+        error: '',
+        pending: false,
+      });
+      setHeroConversion({
         markdown: '',
         error: '',
         pending: false,
@@ -265,8 +378,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const requestId = latestRequestRef.current + 1;
-    latestRequestRef.current = requestId;
+    const requestId = latestRequestRef.current.playground + 1;
+    latestRequestRef.current.playground = requestId;
     const timer = window.setTimeout(() => {
       setConversion((current) => ({
         markdown: html ? current.markdown : '',
@@ -277,6 +390,7 @@ export default function Home() {
       setEngineStatus((current) => (current === 'loading' ? current : 'converting'));
       workerRef.current?.postMessage({
         type: 'convert',
+        target: 'playground',
         requestId,
         html,
         options,
@@ -286,6 +400,30 @@ export default function Home() {
 
     return () => window.clearTimeout(timer);
   }, [gfmEnabled, html, options]);
+
+  useEffect(() => {
+    const requestId = latestRequestRef.current.hero + 1;
+    latestRequestRef.current.hero = requestId;
+    const timer = window.setTimeout(() => {
+      setHeroConversion((current) => ({
+        markdown: heroHtml ? current.markdown : '',
+        error: '',
+        pending: true,
+      }));
+      setRuntimeUnavailable(false);
+      setEngineStatus((current) => (current === 'loading' ? current : 'converting'));
+      workerRef.current?.postMessage({
+        type: 'convert',
+        target: 'hero',
+        requestId,
+        html: heroHtml,
+        options,
+        gfmEnabled,
+      });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [gfmEnabled, heroHtml, options]);
 
   function updateOption<Key extends keyof ConversionOptions>(
     key: Key,
@@ -308,6 +446,9 @@ export default function Home() {
     if (example) {
       setHtml(example.html[nextLanguage]);
     }
+    const nextHeroHtml = heroPreviews[nextLanguage].html;
+    setHeroEditorSeed(nextHeroHtml);
+    setHeroHtml(nextHeroHtml);
     setLanguage(nextLanguage);
   }
 
@@ -327,6 +468,14 @@ export default function Home() {
     loadExample(playgroundExamples[0].id);
   }
 
+  function syncHtmlEditorScroll(event: UIEvent<HTMLTextAreaElement>) {
+    const highlight = htmlHighlightRef.current;
+    if (!highlight) return;
+
+    highlight.scrollTop = event.currentTarget.scrollTop;
+    highlight.scrollLeft = event.currentTarget.scrollLeft;
+  }
+
   return (
     <main data-syntax-theme="tokyo-night">
       <header className="site-header">
@@ -343,7 +492,7 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
             >
-              GitHub <span aria-hidden="true">↗</span>
+              GitHub
             </a>
           </nav>
           <div className="preference-controls">
@@ -384,27 +533,74 @@ export default function Home() {
       </header>
 
       <section className="hero" id="top">
-        <div className="hero-grid" aria-hidden="true" />
         <div className="hero-copy">
-          <p className="eyebrow"><span /> {t.hero.eyebrow}</p>
+          <p className="hero-eyebrow">{t.hero.eyebrow}</p>
           <h1>{t.hero.title} <em>{t.hero.emphasis}</em></h1>
           <p className="hero-intro">{t.hero.intro}</p>
           <div className="hero-actions">
-            <a className="primary-action" href="#playground">
-              {t.hero.tryConverter} <span>↓</span>
-            </a>
+            <a className="primary-action" href="#playground">{t.hero.tryConverter}</a>
             <a
               className="secondary-action"
               href="https://github.com/catouse/turndown-php"
               target="_blank"
               rel="noreferrer"
             >
-              {t.hero.readDocs} <span>↗</span>
+              {t.hero.readDocs}
             </a>
           </div>
+        </div>
+
+        <div className="hero-preview" aria-label={t.hero.highlightsAria}>
+          <div className="hero-preview-labels" aria-hidden="true">
+            <span>{t.hero.previewInput}</span>
+            <span>{t.hero.previewOutput}</span>
+          </div>
+          <div className="hero-preview-code">
+            <pre>
+              <code
+                className="language-html"
+                contentEditable="plaintext-only"
+                suppressContentEditableWarning
+                role="textbox"
+                aria-label={t.hero.previewInput}
+                aria-multiline="true"
+                spellCheck={false}
+                onInput={(event) => setHeroHtml(event.currentTarget.textContent ?? '')}
+              >
+                {heroEditorSeed}
+              </code>
+            </pre>
+            <pre
+              aria-label={t.hero.previewOutput}
+              aria-live="polite"
+              aria-busy={heroConversion.pending}
+            >
+              <code className="language-markdown">{heroMarkdown}</code>
+            </pre>
+          </div>
+          <div className="hero-preview-footer">
+            <p>{t.hero.previewCaption}</p>
+            <span
+              className={`hero-preview-status ${engineStatus}`}
+              aria-live="polite"
+            >
+              {heroRuntimeLabel}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="install-rail" aria-label={t.hero.highlightsAria}>
+        <div className="install-rail-command">
+          <p>{t.hero.installLabel}</p>
           <div className="install-command" aria-label={t.hero.installAria}>
             <span className="prompt" aria-hidden="true">$</span>
-            <pre><code className="language-bash">composer require catouse/turndown-php</code></pre>
+            <pre>
+              <code>
+                {'composer require '}
+                <strong>catouse/turndown-php</strong>
+              </code>
+            </pre>
             <button
               type="button"
               onClick={() => copyText('composer require catouse/turndown-php', 'install')}
@@ -415,33 +611,28 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="hero-aside" aria-label={t.hero.highlightsAria}>
-          <p className="hero-aside-label">{t.hero.signal}</p>
+        <dl className="project-facts">
           <div>
-            <strong>7.2.4</strong>
-            <span>
+            <dt>7.2.4</dt>
+            <dd>
               <a
-                className="hero-aside-link"
                 href="https://github.com/mixmark-io/turndown"
                 target="_blank"
                 rel="noreferrer"
               >
                 {t.hero.compatibility}
               </a>
-            </span>
+            </dd>
           </div>
-          <div><strong>PHP 8.1+</strong><span>{t.hero.php}</span></div>
-          <div><strong>GFM</strong><span>{t.hero.gfm}</span></div>
-          <div><strong>MIT</strong><span>{t.hero.license}</span></div>
-        </div>
+          <div><dt>PHP 8.1+</dt><dd>{t.hero.php}</dd></div>
+          <div><dt>GFM</dt><dd>{t.hero.gfm}</dd></div>
+          <div><dt>MIT</dt><dd>{t.hero.license}</dd></div>
+        </dl>
       </section>
 
       <section className="playground" id="playground" aria-labelledby="playground-title">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow"><span /> {t.playground.eyebrow}</p>
-            <h2 id="playground-title">{t.playground.title}</h2>
-          </div>
+        <div className="section-intro">
+          <h2 id="playground-title">{t.playground.title}</h2>
           <p>{t.playground.intro}</p>
         </div>
 
@@ -471,34 +662,72 @@ export default function Home() {
         <div className="converter-shell">
           <div className="editor-panel editor-input">
             <div className="panel-toolbar">
-              <div className="panel-title">
-                <span className="status-dot violet" />
-                <label htmlFor="html-input">{t.playground.html}</label>
+              <div
+                className="panel-view-tabs"
+                role="group"
+                aria-label={t.playground.inputViewAria}
+              >
+                <button
+                  className={inputView === 'html' ? 'active' : ''}
+                  type="button"
+                  aria-pressed={inputView === 'html'}
+                  onClick={() => setInputView('html')}
+                >
+                  {t.playground.html}
+                </button>
+                <button
+                  className={inputView === 'preview' ? 'active' : ''}
+                  type="button"
+                  aria-pressed={inputView === 'preview'}
+                  onClick={() => setInputView('preview')}
+                >
+                  {t.playground.preview}
+                </button>
               </div>
-              <span>
-                {html.length.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}{' '}
-                {t.playground.chars}
+              <span className="panel-counter">
+                {inputView === 'html'
+                  ? `${html.length.toLocaleString(
+                      language === 'zh' ? 'zh-CN' : 'en-US',
+                    )} ${t.playground.chars}`
+                  : t.playground.previewGuard}
               </span>
             </div>
-            <textarea
-              id="html-input"
-              value={html}
-              onChange={(event) => { setHtml(event.target.value); setActiveExample(''); }}
-              spellCheck={false}
-              aria-describedby="html-hint"
-              placeholder={t.playground.placeholder}
-            />
+            {inputView === 'html' ? (
+              <div className="editor-code-input">
+                <pre ref={htmlHighlightRef} aria-hidden="true">
+                  <code className="language-html">{html}</code>
+                </pre>
+                <textarea
+                  id="html-input"
+                  value={html}
+                  onChange={(event) => {
+                    setHtml(event.target.value);
+                    setActiveExample('');
+                  }}
+                  onScroll={syncHtmlEditorScroll}
+                  spellCheck={false}
+                  aria-describedby="html-hint"
+                  placeholder={t.playground.placeholder}
+                />
+              </div>
+            ) : (
+              <div className="html-render-preview">
+                <iframe
+                  title={t.playground.previewTitle}
+                  srcDoc={createHtmlPreviewDocument(html, language)}
+                  sandbox=""
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            )}
             <p className="sr-only" id="html-hint">{t.playground.htmlHint}</p>
           </div>
 
-          <div className="conversion-arrow" aria-hidden="true">→</div>
-
           <div className="editor-panel editor-output">
             <div className="panel-toolbar">
-              <div className="panel-title">
-                <span className={`status-dot ${engineStatus === 'error' ? 'error' : 'lime'}`} />
-                <label htmlFor="markdown-output">{t.playground.markdown}</label>
-              </div>
+              <span className="panel-heading" id="markdown-output-label">
+                {t.playground.markdown}
+              </span>
               <div className="panel-actions">
                 <span className={`engine-badge ${engineStatus}`}>{engineMessage}</span>
                 <button
@@ -512,18 +741,18 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <textarea
+            <pre
+              className={`editor-code-output ${
+                runtimeUnavailable || conversion.error ? 'error' : ''
+              }`}
               id="markdown-output"
-              value={
-                (runtimeUnavailable ? t.runtime.unavailable : conversion.error) ||
-                conversion.markdown ||
-                (conversion.pending ? t.playground.runtimePending : '')
-              }
-              readOnly
-              spellCheck={false}
+              tabIndex={0}
+              aria-labelledby="markdown-output-label"
               aria-busy={conversion.pending}
               aria-invalid={runtimeUnavailable || Boolean(conversion.error)}
-            />
+            >
+              <code className="language-markdown">{markdownOutput}</code>
+            </pre>
           </div>
         </div>
 
@@ -589,7 +818,6 @@ export default function Home() {
           </div>
 
           <p className="engine-note">
-            <span aria-hidden="true">i</span>
             <span className="engine-note-copy">
               {t.playground.engineNoteBefore}{' '}
               <a href="https://github.com/seanmorris/php-wasm" target="_blank" rel="noreferrer">
@@ -601,47 +829,49 @@ export default function Home() {
       </section>
 
       <section className="proof-section" aria-labelledby="why-title">
-        <div className="section-heading compact">
-          <div>
-            <p className="eyebrow"><span /> {t.proof.eyebrow}</p>
-            <h2 id="why-title">{t.proof.title}</h2>
-          </div>
+        <div className="section-intro">
+          <h2 id="why-title">{t.proof.title}</h2>
           <p>{t.proof.intro}</p>
         </div>
 
-        <div className="feature-grid">
-          {t.proof.features.map((feature, index) => (
-            <article key={feature.title}>
-              <span className="feature-number">{String(index + 1).padStart(2, '0')}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-              <strong>{feature.tag}</strong>
-            </article>
-          ))}
+        <div className="proof-layout">
+          <article className="proof-lead">
+            <p className="proof-version">7.2.4</p>
+            <h3>{t.proof.features[0].title}</h3>
+            <p>{t.proof.features[0].body}</p>
+            <strong>{t.proof.features[0].tag}</strong>
+          </article>
+
+          <div className="proof-list">
+            {t.proof.features.slice(1).map((feature) => (
+              <article key={feature.title}>
+                <div>
+                  <h3>{feature.title}</h3>
+                  <strong>{feature.tag}</strong>
+                </div>
+                <p>{feature.body}</p>
+              </article>
+            ))}
+          </div>
         </div>
 
         <div className="pipeline" aria-label={t.proof.pipelineAria}>
-          {t.proof.pipeline.map((step, index) => (
-            <Fragment key={step.title}>
-              {index > 0 && <b aria-hidden="true">→</b>}
-              <div>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{step.title}</strong>
-                <small>{step.detail}</small>
-              </div>
-            </Fragment>
+          {t.proof.pipeline.map((step) => (
+            <div key={step.title}>
+              <strong>{step.title}</strong>
+              <small>{step.detail}</small>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="api-section" id="api" aria-labelledby="api-title">
         <div className="api-copy">
-          <p className="eyebrow"><span /> {t.api.eyebrow}</p>
           <h2 id="api-title">{t.api.title}</h2>
           <p>{t.api.intro}</p>
           <ul>
-            {t.api.steps.map((step, index) => (
-              <li key={step}><span>{index + 1}</span> {step}</li>
+            {t.api.steps.map((step) => (
+              <li key={step}>{step}</li>
             ))}
           </ul>
           <a
@@ -649,13 +879,12 @@ export default function Home() {
             target="_blank"
             rel="noreferrer"
           >
-            {t.api.explore} <span>↗</span>
+            {t.api.explore}
           </a>
         </div>
 
         <div className="code-card">
           <div className="code-toolbar">
-            <div><span /> <span /> <span /></div>
             <p>example.php</p>
             <button type="button" onClick={() => copyText(phpExample, 'php')}>
               {copied === 'php' ? t.api.copiedCode : t.api.copyCode}
@@ -665,19 +894,17 @@ export default function Home() {
         </div>
       </section>
 
-      <aside className="security-note">
-        <div className="security-mark" aria-hidden="true">!</div>
+      <aside className="security-note" aria-labelledby="security-title">
         <div>
-          <p className="settings-kicker">{t.security.kicker}</p>
-          <h2>{t.security.title}</h2>
+          <strong id="security-title">{t.security.title}</strong>
+          <p>{t.security.body}</p>
         </div>
-        <p>{t.security.body}</p>
         <a
           href="https://github.com/catouse/turndown-php#parsing-and-security"
           target="_blank"
           rel="noreferrer"
         >
-          {t.security.link} <span>↗</span>
+          {t.security.link}
         </a>
       </aside>
 
