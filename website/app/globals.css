@@ -16,6 +16,7 @@
   --line-strong: rgba(248, 246, 241, 0.26);
   --lime: #b7f36b;
   --lime-fill: #b7f36b;
+  --logo-mark: #b7f36b;
   --on-lime: #11160e;
   --danger: #ff879a;
   --shadow: rgba(3, 6, 12, 0.26);
@@ -39,6 +40,7 @@
   --line-strong: rgba(21, 24, 23, 0.28);
   --lime: #356f1f;
   --lime-fill: #a9e95f;
+  --logo-mark: #9edc53;
   --on-lime: #17210e;
   --danger: #a62d46;
   --shadow: rgba(31, 39, 34, 0.12);
@@ -134,7 +136,12 @@ button:active,
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  color: var(--lime);
+  color: var(--logo-mark);
+}
+
+.ui-icon {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .site-header-actions,
@@ -224,15 +231,6 @@ button:active,
   border-color: var(--line-strong);
 }
 
-.theme-swatch {
-  width: 10px;
-  height: 10px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  background: var(--ink);
-  box-shadow: inset -3px 0 0 var(--surface);
-}
-
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 0.98fr) minmax(500px, 1.02fr);
@@ -302,6 +300,7 @@ h1 em {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 48px;
   padding: 0 19px;
   border-radius: var(--radius-control);
@@ -412,6 +411,9 @@ h1 em {
 }
 
 .hero-preview-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
   color: var(--lime);
   font: 700 9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -483,6 +485,10 @@ h1 em {
 }
 
 .install-command button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 62px;
   padding: 9px 10px;
   border: 0;
@@ -596,6 +602,10 @@ h1 em {
 }
 
 .example-bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 32px;
   padding: 0 11px;
   border: 1px solid transparent;
@@ -665,6 +675,7 @@ h1 em {
 
 .panel-view-tabs {
   align-self: stretch;
+  align-items: stretch;
   gap: 2px;
 }
 
@@ -673,6 +684,10 @@ h1 em {
 }
 
 .panel-view-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 64px;
   padding: 0 12px;
   border: 0;
@@ -713,12 +728,19 @@ h1 em {
 }
 
 .engine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   max-width: 260px;
   overflow: hidden;
   color: var(--muted-2);
   font: 9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.engine-badge > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .engine-badge.ready,
@@ -731,6 +753,10 @@ h1 em {
 }
 
 .panel-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 8px 11px;
   border: 1px solid color-mix(in srgb, var(--lime) 45%, transparent);
   border-radius: var(--radius-control);
@@ -1163,7 +1189,9 @@ h1 em {
 
 .api-copy > a,
 .security-note a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--ink);
@@ -1202,6 +1230,10 @@ h1 em {
 }
 
 .code-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 7px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
@@ -1232,8 +1264,8 @@ h1 em {
 
 .security-note {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px 18px;
   align-items: center;
   width: min(calc(100% - 64px), 1376px);
   margin: 56px auto;
@@ -1242,6 +1274,10 @@ h1 em {
   border-left: 4px solid var(--lime);
   border-radius: var(--radius-control);
   background: var(--surface);
+}
+
+.security-icon {
+  color: var(--lime);
 }
 
 .security-note > div {
@@ -1545,10 +1581,15 @@ footer {
   }
 
   .security-note {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 14px;
     width: calc(100% - 40px);
     margin: 40px auto;
+  }
+
+  .security-note a {
+    grid-column: 2;
+    justify-self: start;
   }
 
   footer {
@@ -1571,11 +1612,6 @@ footer {
     width: 38px;
     padding: 0;
     font-size: 0;
-  }
-
-  .theme-swatch {
-    width: 12px;
-    height: 12px;
   }
 
   .hero-actions {

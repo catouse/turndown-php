@@ -1,5 +1,18 @@
 'use client';
 
+import { ArrowRightDownIcon } from '@solar-icons/react/linear/arrow-right-down';
+import { ArrowRightUpIcon } from '@solar-icons/react/linear/arrow-right-up';
+import { BookMinimalisticIcon } from '@solar-icons/react/linear/book-minimalistic';
+import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle';
+import { Code2Icon } from '@solar-icons/react/linear/code-2';
+import { CopyIcon } from '@solar-icons/react/linear/copy';
+import { CpuBoltIcon } from '@solar-icons/react/linear/cpu-bolt';
+import { EyeIcon } from '@solar-icons/react/linear/eye';
+import { MoonIcon } from '@solar-icons/react/linear/moon';
+import { RestartIcon } from '@solar-icons/react/linear/restart';
+import { ShieldWarningIcon } from '@solar-icons/react/linear/shield-warning';
+import { SunIcon } from '@solar-icons/react/linear/sun';
+import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic';
 import { useEffect, useRef, useState, type UIEvent } from 'react';
 import { TurndownLogo } from './TurndownLogo';
 import {
@@ -184,6 +197,19 @@ function createHtmlPreviewDocument(html: string, language: Language): string {
 </head>
 <body>${html}</body>
 </html>`;
+}
+
+function CopyActionIcon({ copied }: { copied: boolean }) {
+  const Icon = copied ? CheckCircleIcon : CopyIcon;
+
+  return (
+    <Icon
+      className="ui-icon"
+      size={15}
+      strokeWidth={1.8}
+      aria-hidden
+    />
+  );
 }
 
 function getInitialLanguage(): Language {
@@ -525,7 +551,11 @@ export default function Home() {
               title={theme === 'dark' ? t.controls.useLight : t.controls.useDark}
               onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
             >
-              <span className="theme-swatch" aria-hidden="true" />
+              {theme === 'dark' ? (
+                <SunIcon className="ui-icon" size={15} strokeWidth={1.8} aria-hidden />
+              ) : (
+                <MoonIcon className="ui-icon" size={15} strokeWidth={1.8} aria-hidden />
+              )}
               {theme === 'dark' ? t.controls.light : t.controls.dark}
             </button>
           </div>
@@ -538,13 +568,27 @@ export default function Home() {
           <h1>{t.hero.title} <em>{t.hero.emphasis}</em></h1>
           <p className="hero-intro">{t.hero.intro}</p>
           <div className="hero-actions">
-            <a className="primary-action" href="#playground">{t.hero.tryConverter}</a>
+            <a className="primary-action" href="#playground">
+              {t.hero.tryConverter}
+              <ArrowRightDownIcon
+                className="ui-icon"
+                size={17}
+                strokeWidth={1.8}
+                aria-hidden
+              />
+            </a>
             <a
               className="secondary-action"
               href="https://github.com/catouse/turndown-php"
               target="_blank"
               rel="noreferrer"
             >
+              <BookMinimalisticIcon
+                className="ui-icon"
+                size={16}
+                strokeWidth={1.8}
+                aria-hidden
+              />
               {t.hero.readDocs}
             </a>
           </div>
@@ -584,6 +628,12 @@ export default function Home() {
               className={`hero-preview-status ${engineStatus}`}
               aria-live="polite"
             >
+              <CpuBoltIcon
+                className="ui-icon"
+                size={13}
+                strokeWidth={1.8}
+                aria-hidden
+              />
               {heroRuntimeLabel}
             </span>
           </div>
@@ -606,6 +656,7 @@ export default function Home() {
               onClick={() => copyText('composer require catouse/turndown-php', 'install')}
               aria-label={t.hero.copyInstall}
             >
+              <CopyActionIcon copied={copied === 'install'} />
               {copied === 'install' ? t.hero.copied : t.hero.copy}
             </button>
           </div>
@@ -653,9 +704,23 @@ export default function Home() {
           </div>
           <div className="example-actions">
             <button type="button" onClick={() => { setHtml(''); setActiveExample(''); }}>
+              <TrashBinMinimalisticIcon
+                className="ui-icon"
+                size={15}
+                strokeWidth={1.8}
+                aria-hidden
+              />
               {t.playground.clear}
             </button>
-            <button type="button" onClick={resetPlayground}>{t.playground.reset}</button>
+            <button type="button" onClick={resetPlayground}>
+              <RestartIcon
+                className="ui-icon"
+                size={15}
+                strokeWidth={1.8}
+                aria-hidden
+              />
+              {t.playground.reset}
+            </button>
           </div>
         </div>
 
@@ -673,6 +738,12 @@ export default function Home() {
                   aria-pressed={inputView === 'html'}
                   onClick={() => setInputView('html')}
                 >
+                  <Code2Icon
+                    className="ui-icon"
+                    size={15}
+                    strokeWidth={1.8}
+                    aria-hidden
+                  />
                   {t.playground.html}
                 </button>
                 <button
@@ -681,6 +752,12 @@ export default function Home() {
                   aria-pressed={inputView === 'preview'}
                   onClick={() => setInputView('preview')}
                 >
+                  <EyeIcon
+                    className="ui-icon"
+                    size={15}
+                    strokeWidth={1.8}
+                    aria-hidden
+                  />
                   {t.playground.preview}
                 </button>
               </div>
@@ -729,12 +806,21 @@ export default function Home() {
                 {t.playground.markdown}
               </span>
               <div className="panel-actions">
-                <span className={`engine-badge ${engineStatus}`}>{engineMessage}</span>
+                <span className={`engine-badge ${engineStatus}`}>
+                  <CpuBoltIcon
+                    className="ui-icon"
+                    size={13}
+                    strokeWidth={1.8}
+                    aria-hidden
+                  />
+                  <span>{engineMessage}</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => copyText(conversion.markdown, 'markdown')}
                   disabled={conversion.pending || !conversion.markdown}
                 >
+                  <CopyActionIcon copied={copied === 'markdown'} />
                   {copied === 'markdown'
                     ? t.playground.copiedOutput
                     : t.playground.copyOutput}
@@ -880,6 +966,12 @@ export default function Home() {
             rel="noreferrer"
           >
             {t.api.explore}
+            <ArrowRightUpIcon
+              className="ui-icon"
+              size={16}
+              strokeWidth={1.8}
+              aria-hidden
+            />
           </a>
         </div>
 
@@ -887,6 +979,7 @@ export default function Home() {
           <div className="code-toolbar">
             <p>example.php</p>
             <button type="button" onClick={() => copyText(phpExample, 'php')}>
+              <CopyActionIcon copied={copied === 'php'} />
               {copied === 'php' ? t.api.copiedCode : t.api.copyCode}
             </button>
           </div>
@@ -895,6 +988,12 @@ export default function Home() {
       </section>
 
       <aside className="security-note" aria-labelledby="security-title">
+        <ShieldWarningIcon
+          className="ui-icon security-icon"
+          size={22}
+          strokeWidth={1.8}
+          aria-hidden
+        />
         <div>
           <strong id="security-title">{t.security.title}</strong>
           <p>{t.security.body}</p>
@@ -905,6 +1004,12 @@ export default function Home() {
           rel="noreferrer"
         >
           {t.security.link}
+          <ArrowRightUpIcon
+            className="ui-icon"
+            size={15}
+            strokeWidth={1.8}
+            aria-hidden
+          />
         </a>
       </aside>
 
@@ -918,6 +1023,7 @@ export default function Home() {
           <a href="https://packagist.org/packages/catouse/turndown-php" target="_blank" rel="noreferrer">Packagist</a>
           <a href="https://github.com/catouse/turndown-php/blob/main/README.zh-CN.md" target="_blank" rel="noreferrer">{t.footer.chineseDocs}</a>
           <a href="https://github.com/catouse/turndown-php/blob/main/LICENSE" target="_blank" rel="noreferrer">{t.footer.license}</a>
+          <a href="https://solar-icons.vercel.app/" target="_blank" rel="noreferrer">{t.footer.icons}</a>
         </div>
         <p className="footer-note">{t.footer.note}</p>
       </footer>

@@ -191,15 +191,35 @@ const html5License = await readFile(
   resolve(projectRoot, 'vendor/masterminds/html5/LICENSE.txt'),
   'utf8',
 );
+const solarIconsLicense = await readFile(
+  resolve(siteRoot, 'node_modules/@solar-icons/react/LICENSE'),
+  'utf8',
+);
+const solarIconsThirdPartyNotice = (
+  await readFile(
+    resolve(siteRoot, 'node_modules/@solar-icons/react/LICENSE-THIRD-PARTY'),
+    'utf8',
+  )
+).replace(/[ \t]+$/gm, '').trimEnd() + '\n';
 
 await mkdir(publicLicenseDirectory, { recursive: true });
 await writeFile(
   resolve(publicLicenseDirectory, 'THIRD_PARTY_NOTICES.txt'),
   `${notices.join('\n\n---\n\n')}\n\n` +
     `PHP is distributed under the PHP License 3.01: https://www.php.net/license/3_01.txt\n` +
-    `HTML5-PHP is distributed under the MIT license included alongside this notice.\n`,
+    `HTML5-PHP is distributed under the MIT license included alongside this notice.\n` +
+    `@solar-icons/react is distributed under the MIT license included alongside this notice.\n\n` +
+    `${solarIconsThirdPartyNotice.trim()}\n`,
 );
 await writeFile(resolve(publicLicenseDirectory, 'APACHE-2.0.txt'), apacheLicense);
 await writeFile(resolve(publicLicenseDirectory, 'HTML5-PHP.txt'), html5License);
+await writeFile(
+  resolve(publicLicenseDirectory, 'SOLAR-ICONS-MIT.txt'),
+  solarIconsLicense,
+);
+await writeFile(
+  resolve(publicLicenseDirectory, 'SOLAR-ICONS-THIRD-PARTY.txt'),
+  solarIconsThirdPartyNotice,
+);
 
 console.log(`Generated ${generatedFiles.length} PHP runtime files and third-party notices.`);
