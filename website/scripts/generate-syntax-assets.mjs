@@ -9,7 +9,13 @@ const publicRoot = resolve(siteRoot, 'public');
 const assets = [
   ['dist/microlighter.min.js', 'vendor/microlighter/microlighter.min.js'],
   ['dist/grammars/bash.js', 'vendor/microlighter/grammars/bash.js'],
+  ['dist/grammars/css.js', 'vendor/microlighter/grammars/css.js'],
+  ['dist/grammars/html.js', 'vendor/microlighter/grammars/html.js'],
+  ['dist/grammars/javascript.js', 'vendor/microlighter/grammars/javascript.js'],
+  ['dist/grammars/json.js', 'vendor/microlighter/grammars/json.js'],
+  ['dist/grammars/markdown.js', 'vendor/microlighter/grammars/markdown.js'],
   ['dist/grammars/php.js', 'vendor/microlighter/grammars/php.js'],
+  ['dist/grammars/yaml.js', 'vendor/microlighter/grammars/yaml.js'],
   ['dist/themes/tokyo-night.css', 'vendor/microlighter/themes/tokyo-night.css'],
   ['LICENSE', 'licenses/MICROLIGHTER-MIT.txt'],
 ];
