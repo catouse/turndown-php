@@ -5,7 +5,6 @@ import {
   type PhpBaseModuleFactory,
   type PhpSharedLibrary,
 } from 'php-wasm/PhpBase';
-import php84Runtime from 'php-wasm/php8.4-web.mjs';
 import * as dom84 from 'php-wasm-dom/8.4.mjs';
 import * as libxml from 'php-wasm-libxml';
 import * as mbstring84 from 'php-wasm-mbstring/8.4.mjs';
@@ -65,6 +64,25 @@ let runtimePromise: Promise<PhpBase> | null = null;
 
 function post(message: WorkerResponse) {
   workerScope.postMessage(message);
+}
+
+function installPhpWasmWorkerGlobals() {
+  const globals = globalThis as unknown as Record<string, unknown>;
+
+  // php-wasm's web binary is also advertised for Worker use, but its
+  // Emscripten glue initializes a few DOM target constants at module load.
+  // The converter never uses those UI APIs; these inert targets let the web
+  // binary initialize without moving the PHP runtime onto the main thread.
+  globals.window ??= globalThis;
+  globals.document ??= {
+    body: null,
+    currentScript: null,
+    documentElement: { style: {} },
+    getElementById: () => null,
+    querySelector: () => null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  };
 }
 
 function describeError(error: unknown): string {
@@ -136,6 +154,9 @@ async function createRuntime(): Promise<PhpBase> {
     status: 'loading',
     message: 'Loading PHP 8.4 and its HTML extensions…',
   });
+
+  installPhpWasmWorkerGlobals();
+  const { default: php84Runtime } = await import('php-wasm/php8.4-web.mjs');
 
   let startupError = '';
   const sharedLibs = [libxml, xml84, dom84, mbstring84] as unknown as PhpSharedLibrary[];
