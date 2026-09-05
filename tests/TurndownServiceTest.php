@@ -272,6 +272,19 @@ final class TurndownServiceTest extends TestCase
         }
     }
 
+    public function testOrderedListIndexesRespectParentsAndAllSiblingElements(): void
+    {
+        $service = new TurndownService();
+        $service->remove('script');
+
+        self::assertSame(
+            "3.  first\n    0.  nested\n5.  last",
+            $service->turndown('<ol start="3"><li>first<ol start="0"><li>nested</li></ol></li>'
+                . '<script>ignored</script><li>last</li></ol>'),
+        );
+        self::assertSame('1.  next', $service->turndown('<ol><li>next</li></ol>'));
+    }
+
     public function testEcmascriptLineSeparatorsInBlockquotesAndFences(): void
     {
         $fencedService = new TurndownService([

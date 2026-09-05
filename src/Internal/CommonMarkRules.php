@@ -62,11 +62,16 @@ final class CommonMarkRules
             ],
             'listItem' => [
                 'filter' => 'li',
-                'replacement' => static function (string $content, DOMElement $node, array $options): string {
+                'replacement' => new ContextualCallback(static function (
+                    string $content,
+                    DOMElement $node,
+                    array $options,
+                    ConversionContext $context,
+                ): string {
                     $prefix = Utils::stringOption($options, 'bulletListMarker') . '   ';
                     $parent = $node->parentNode;
                     if ($parent instanceof DOMElement && DomUtils::tagName($parent) === 'OL') {
-                        $index = DomUtils::elementIndex($node);
+                        $index = $context->elementIndex($node);
                         $start = $parent->getAttribute('start');
                         $number = $start !== ''
                             ? Utils::jsNumberToString(Utils::jsNumber($start) + $index)
@@ -79,7 +84,7 @@ final class CommonMarkRules
                     $content = str_replace("\n", "\n" . str_repeat(' ', strlen($prefix)), $content);
 
                     return $prefix . $content . ($node->nextSibling !== null ? "\n" : '');
-                },
+                }),
             ],
             'indentedCodeBlock' => [
                 'filter' => static fn(DOMElement $node, array $options): bool =>

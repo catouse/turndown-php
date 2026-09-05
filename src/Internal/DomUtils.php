@@ -145,18 +145,6 @@ final class DomUtils
         return null;
     }
 
-    public static function elementIndex(DOMElement $node): int
-    {
-        $index = 0;
-        for ($sibling = $node->previousSibling; $sibling !== null; $sibling = $sibling->previousSibling) {
-            if ($sibling instanceof DOMElement) {
-                ++$index;
-            }
-        }
-
-        return $index;
-    }
-
     private static function usesHtmlSemantics(DOMElement $node): bool
     {
         /** @var SplObjectStorage<DOMElement, int> $states */
