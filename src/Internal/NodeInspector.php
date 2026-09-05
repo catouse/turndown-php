@@ -50,7 +50,7 @@ final class NodeInspector
             return false;
         }
 
-        if ($sibling->nodeType === XML_TEXT_NODE) {
+        if ($sibling->nodeType === XML_TEXT_NODE || $sibling->nodeType === XML_CDATA_SECTION_NODE) {
             $value = $sibling->nodeValue ?? '';
             return $side === 'left' ? str_ends_with($value, ' ') : str_starts_with($value, ' ');
         }

@@ -208,6 +208,20 @@ final class TurndownServiceTest extends TestCase
         );
     }
 
+    public function testCdataTextIsRenderedWithoutMutatingDomInput(): void
+    {
+        $service = new TurndownService();
+        self::assertSame('a & b', $service->turndown('<svg><text><![CDATA[a & b]]></text></svg>'));
+
+        $document = new DOMDocument();
+        $document->loadXML('<div><p><![CDATA[a * b]]></p><p><code><![CDATA[a * b]]></code></p>'
+            . '<p><![CDATA[a ]]><em> b </em><![CDATA[ c]]></p></div>');
+        $before = $document->saveXML();
+
+        self::assertSame("a \\* b\n\n`a * b`\n\na _b_ c", $service->turndown($document));
+        self::assertSame($before, $document->saveXML());
+    }
+
     public function testHtmlIntegrationPointsUseHtmlSemantics(): void
     {
         $service = new TurndownService();

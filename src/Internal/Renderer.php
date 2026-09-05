@@ -49,7 +49,7 @@ final class Renderer
         $output = '';
         for ($node = $parent->firstChild; $node !== null; $node = $node->nextSibling) {
             $replacement = '';
-            if ($node->nodeType === XML_TEXT_NODE) {
+            if ($node->nodeType === XML_TEXT_NODE || $node->nodeType === XML_CDATA_SECTION_NODE) {
                 $value = $node->nodeValue ?? '';
                 $replacement = $parentIsCode ? $value : (string) call_user_func($this->escaper, $value);
             } elseif ($node instanceof DOMElement) {
