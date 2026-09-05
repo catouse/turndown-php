@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const siteUrl = new URL('https://catouse.github.io/turndown-php/');
+const siteUrl = new URL('https://turndown-php.catou.se/');
 const preferenceScript = `(function(){var root=document.documentElement;var language=navigator.language&&navigator.language.toLowerCase().startsWith('zh')?'zh':'en';var theme=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';try{var savedLanguage=window.localStorage.getItem('turndown-language');var savedTheme=window.localStorage.getItem('turndown-theme');if(savedLanguage==='en'||savedLanguage==='zh')language=savedLanguage;if(savedTheme==='dark'||savedTheme==='light')theme=savedTheme;}catch(error){}root.lang=language==='zh'?'zh-CN':'en';root.dataset.theme=theme;root.style.colorScheme=theme;})();`;
 
 export const metadata: Metadata = {
