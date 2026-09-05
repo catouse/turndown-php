@@ -88,8 +88,8 @@ jobs:
       - name: Check source
         run: npm run lint && npm run typecheck
 
-      - name: Test runtime generation
-        run: npm run test:php-runtime-generation
+      - name: Test runtime setup
+        run: npm run test:php-runtime-generation && npm run test:runtime-startup
 
       - name: Build static website
         run: npm run build:pages

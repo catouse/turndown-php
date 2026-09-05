@@ -15,6 +15,7 @@ import { SunIcon } from '@solar-icons/react/linear/sun';
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic';
 import { useEffect, useRef, useState, type UIEvent } from 'react';
 import { TurndownLogo } from './TurndownLogo';
+import { deferRuntimeStartup } from './runtime-startup';
 import {
   playgroundExamples,
   siteContent,
@@ -251,6 +252,7 @@ export default function Home() {
     pending: true,
   });
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('loading');
+  const [runtimeStarted, setRuntimeStarted] = useState(false);
   const [runtimeUnavailable, setRuntimeUnavailable] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const latestRequestRef = useRef<Record<RuntimeTarget, number>>({
@@ -343,7 +345,7 @@ export default function Home() {
     }
   }, [language, t.meta.description, t.meta.title, theme]);
 
-  useEffect(() => {
+  useEffect(() => deferRuntimeStartup(() => {
     const worker = new Worker(new URL('../workers/turndown.worker.ts', import.meta.url), {
       type: 'module',
     });
@@ -396,14 +398,16 @@ export default function Home() {
     };
 
     worker.postMessage({ type: 'initialize' });
+    setRuntimeStarted(true);
 
     return () => {
       worker.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }), []);
 
   useEffect(() => {
+    if (!runtimeStarted) return;
     const requestId = latestRequestRef.current.playground + 1;
     latestRequestRef.current.playground = requestId;
     const timer = window.setTimeout(() => {
@@ -425,9 +429,10 @@ export default function Home() {
     }, 180);
 
     return () => window.clearTimeout(timer);
-  }, [gfmEnabled, html, options]);
+  }, [gfmEnabled, html, options, runtimeStarted]);
 
   useEffect(() => {
+    if (!runtimeStarted) return;
     const requestId = latestRequestRef.current.hero + 1;
     latestRequestRef.current.hero = requestId;
     const timer = window.setTimeout(() => {
@@ -449,7 +454,7 @@ export default function Home() {
     }, 180);
 
     return () => window.clearTimeout(timer);
-  }, [gfmEnabled, heroHtml, options]);
+  }, [gfmEnabled, heroHtml, options, runtimeStarted]);
 
   function updateOption<Key extends keyof ConversionOptions>(
     key: Key,

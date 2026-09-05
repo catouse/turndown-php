@@ -18,6 +18,7 @@
     "start": "vinext start",
     "test:php-wasm": "node scripts/smoke-php-wasm.mjs",
     "test:php-runtime-generation": "node scripts/test-php-runtime-generation.mjs",
+    "test:runtime-startup": "node scripts/test-runtime-startup.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern pages-dist --ignore-pattern .next --ignore-pattern public/vendor"
   },
