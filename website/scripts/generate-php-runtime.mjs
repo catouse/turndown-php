@@ -126,6 +126,9 @@ const sourcesAvailable = (
 ).every(Boolean);
 
 if (!sourcesAvailable) {
+  if (process.env.TURNDOWN_REQUIRE_SOURCES === '1') {
+    throw new Error('PHP sources and Composer dependencies are required to build this runtime.');
+  }
   if (await exists(outputFile)) {
     console.log('Using the committed PHP runtime bundle.');
     process.exit(0);

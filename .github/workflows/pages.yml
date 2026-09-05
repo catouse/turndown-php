@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'src/**'
+      - 'composer.json'
       - 'website/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -20,6 +22,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TURNDOWN_REQUIRE_SOURCES: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -30,6 +34,17 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: website/package-lock.json
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+          tools: composer:v2
+          extensions: dom, mbstring
+
+      - name: Install PHP runtime dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
 
       - name: Configure GitHub Pages
         id: pages
