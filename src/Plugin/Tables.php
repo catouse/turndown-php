@@ -18,11 +18,6 @@ use DOMNode;
  */
 final class Tables
 {
-    private const VOID_ELEMENTS = [
-        'AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT',
-        'KEYGEN', 'LINK', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR',
-    ];
-
     public function __invoke(TurndownService $service): void
     {
         $service->keep(function (DOMElement $node, array $options): bool {
@@ -86,7 +81,7 @@ final class Tables
             'filter' => function (DOMElement $node, array $options): bool {
                 return strcasecmp($node->tagName, 'tr') === 0
                     && Utils::isWhitespace($node->textContent)
-                    && !$this->hasVoidDescendant($node);
+                    && !DomUtils::hasVoid($node);
             },
             'replacement' => static function (string $content, DOMElement $node, array $options): string {
                 return '';
@@ -155,33 +150,6 @@ final class Tables
         }
 
         return null;
-    }
-
-    private function hasVoidDescendant(DOMElement $node): bool
-    {
-        /** @var list<DOMNode> $stack */
-        $stack = [];
-        for ($child = $node->lastChild; $child !== null; $child = $child->previousSibling) {
-            $stack[] = $child;
-        }
-
-        while ($stack !== []) {
-            $current = array_pop($stack);
-            if (!$current instanceof DOMElement) {
-                continue;
-            }
-            if (in_array(DomUtils::tagName($current), self::VOID_ELEMENTS, true)) {
-                return true;
-            }
-            if (DomUtils::tagName($current) === 'TEMPLATE') {
-                continue;
-            }
-            for ($child = $current->lastChild; $child !== null; $child = $child->previousSibling) {
-                $stack[] = $child;
-            }
-        }
-
-        return false;
     }
 
     private function cell(string $content, DOMElement $node): string
