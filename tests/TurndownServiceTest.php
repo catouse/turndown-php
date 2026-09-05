@@ -11,7 +11,9 @@ use Catouse\Turndown\TurndownService;
 use DOMDocument;
 use DOMElement;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use TypeError;
+use WeakReference;
 
 final class TurndownServiceTest extends TestCase
 {
@@ -121,6 +123,55 @@ final class TurndownServiceTest extends TestCase
         (new TurndownService())->turndown($root);
 
         self::assertSame($before, FixtureLoader::serialize($root));
+    }
+
+    public function testNestedConversionsReleaseClonedNodes(): void
+    {
+        $nodes = [];
+        $service = new TurndownService();
+        $service->addRule('nested', [
+            'filter' => 'span',
+            'replacement' => static function (string $content, DOMElement $node) use ($service, &$nodes): string {
+                $nodes[] = WeakReference::create($node);
+
+                return $content === 'outer'
+                    ? $content . $service->turndown('<span>inner</span>')
+                    : $content;
+            },
+        ]);
+
+        self::assertSame('outerinner', $service->turndown('<span>outer</span>'));
+        self::assertCount(2, $nodes);
+        foreach ($nodes as $node) {
+            self::assertNull($node->get());
+        }
+    }
+
+    public function testFailedConversionsReleaseClonedNodes(): void
+    {
+        $nodeReference = null;
+        $service = new TurndownService();
+        $service->addRule('failure', [
+            'filter' => 'span',
+            'replacement' => static function (string $content, DOMElement $node) use (&$nodeReference): string {
+                if ($content === 'before') {
+                    // Debuggers can retain the throwing node in the exception trace.
+                    $nodeReference = WeakReference::create($node);
+                    return $content;
+                }
+                throw new RuntimeException('Conversion failed.');
+            },
+        ]);
+
+        try {
+            $service->turndown('<span>before</span><span>failure</span>');
+            self::fail('The replacement must throw.');
+        } catch (RuntimeException) {
+        }
+
+        self::assertNotNull($nodeReference);
+        self::assertNull($nodeReference->get());
+        self::assertSame('next', $service->turndown('<p>next</p>'));
     }
 
     public function testEscapeCanBeOverridden(): void

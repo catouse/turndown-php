@@ -6,8 +6,7 @@ namespace Catouse\Turndown\Internal;
 
 use DOMElement;
 use DOMNode;
-use LogicException;
-use WeakMap;
+use SplObjectStorage;
 
 /** @internal */
 final class DomUtils
@@ -21,8 +20,22 @@ final class DomUtils
     private const NAMESPACE_SVG = 3;
     private const NAMESPACE_OTHER = 4;
 
-    /** @var WeakMap<object, mixed>|null */
-    private static ?WeakMap $semanticNamespaceStates = null;
+    /** @var SplObjectStorage<DOMElement, int>|null */
+    private static ?SplObjectStorage $semanticNamespaceStates = null;
+
+    /** @param callable():string $convert */
+    public static function withNamespaceCache(callable $convert): string
+    {
+        $previous = self::$semanticNamespaceStates;
+        // Keep DOM wrappers alive for this conversion, including nested calls.
+        self::$semanticNamespaceStates = new SplObjectStorage();
+
+        try {
+            return $convert();
+        } finally {
+            self::$semanticNamespaceStates = $previous;
+        }
+    }
 
     /** @var list<string> */
     private const BLOCK_ELEMENTS = [
@@ -146,14 +159,10 @@ final class DomUtils
 
     private static function usesHtmlSemantics(DOMElement $node): bool
     {
-        $states = self::$semanticNamespaceStates ??= new WeakMap();
+        /** @var SplObjectStorage<DOMElement, int> $states */
+        $states = self::$semanticNamespaceStates ?? new SplObjectStorage();
         if (isset($states[$node])) {
-            $state = $states[$node];
-            if (!is_int($state)) {
-                throw new LogicException('Cached namespace state must be an integer.');
-            }
-
-            return $state === self::NAMESPACE_HTML;
+            return $states[$node] === self::NAMESPACE_HTML;
         }
 
         /** @var list<DOMElement> $pending */
@@ -173,9 +182,6 @@ final class DomUtils
         }
 
         $state = $states[$current];
-        if (!is_int($state)) {
-            throw new LogicException('Cached namespace state must be an integer.');
-        }
         $parent = $current;
         while ($pending !== []) {
             $child = array_pop($pending);

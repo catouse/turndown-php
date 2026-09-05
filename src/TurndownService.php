@@ -66,16 +66,18 @@ class TurndownService
             return '';
         }
 
-        $root = $this->parser->prepare($input);
-        $this->whitespaceCollapser->collapse($root, (bool) $this->options['preformattedCode']);
-        $renderer = new Renderer(
-            $this->rules,
-            new NodeInspector(),
-            $this->options,
-            fn(string $value): string => $this->escape($value),
-        );
+        return DomUtils::withNamespaceCache(function () use ($input): string {
+            $root = $this->parser->prepare($input);
+            $this->whitespaceCollapser->collapse($root, (bool) $this->options['preformattedCode']);
+            $renderer = new Renderer(
+                $this->rules,
+                new NodeInspector(),
+                $this->options,
+                fn(string $value): string => $this->escape($value),
+            );
 
-        return $renderer->render($root);
+            return $renderer->render($root);
+        });
     }
 
     /** @param array{filter:mixed, replacement:mixed, append?:mixed} $rule */
